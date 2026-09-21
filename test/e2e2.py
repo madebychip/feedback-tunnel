@@ -1,58 +1,82 @@
-import time, re
+"""Runs after e2e.py (note 1 resolved, note 2 open): the agent ticks a box while
+a reviewer watches, hot-reload wipes, clipped carousels, and a phone."""
+import re
+import time
 from playwright.sync_api import sync_playwright
-URL = "http://127.0.0.1:4000/"; SH = "/home/claude/shots/"; MD = "/home/claude/testproj/FEEDBACK.md"
-PINS = """() => [...document.querySelector('feedback-tunnel').shadowRoot.querySelectorAll('.pin')].map(p => (p.querySelector('.num')?.textContent||'✓') + (p.classList.contains('resolved')?':green':':open') + (p.hidden?':hidden':''))"""
-TOASTS = """() => [...document.querySelector('feedback-tunnel').shadowRoot.querySelectorAll('.toast strong')].map(t=>t.textContent)"""
+from helpers import *
+
+print("e2e2.py: agent tick, reload, narrow carousel, phone")
 with sync_playwright() as p:
     b = p.chromium.launch()
-    # --- Agent ticks the box while the reviewer watches
-    ctx = b.new_context(viewport={"width":1280,"height":800}, extra_http_headers={"cf-connecting-ip":"203.0.113.9"})
-    r = ctx.new_page(); errs = []
+    errs = []
+
+    # -- the agent ticks the box while the reviewer watches
+    ctx = b.new_context(viewport={"width": 1280, "height": 800}, extra_http_headers=REVIEWER)
+    r = ctx.new_page()
     r.on("pageerror", lambda e: errs.append(str(e)))
-    r.goto(URL); r.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(1)
+    mount(r)
     r.evaluate("document.getElementById('beans').scrollLeft = 600"); time.sleep(0.3)
-    print("before agent:", r.evaluate(PINS))
-    md = open(MD).read()
-    open(MD, "w").write(md.replace("- [ ] **#2**", "- [x] **#2**"))   # what Claude Code would do
-    time.sleep(3.2)
-    print("after agent:", r.evaluate(PINS), r.evaluate(TOASTS))
-    r.screenshot(path=SH+"11_agent_resolved.png")
-    print("FEEDBACK.md now:", re.findall(r"## (Open|Resolved) \((\d+)\)", open(MD).read()), "| resolved-by line:", re.findall(r"Resolved by [^,\n]+", open(MD).read()))
+    check("before the agent: note 2 is open", "2:open" in r.evaluate(PINS), r.evaluate(PINS))
+    edit_md("- [ ] **#2**", "- [x] **#2**")  # what Claude Code does
+    check("agent's tick turns the pin green", poll(lambda: "2:green" in r.evaluate(PINS), timeout=8), r.evaluate(PINS))
+    toasts = r.evaluate(TOASTS)
+    check("reviewer gets a resolved toast", any(re.search(r"note 2 resolved", t, re.I) for t in toasts), toasts)
+    shot(r, "11_agent_resolved.png")
+    md = FEEDBACK_MD.read_text()
+    check("FEEDBACK.md: note 2 moved to Resolved", "## Resolved (2)" in md and "## Open (0)" in md)
+    check("FEEDBACK.md: says it was ticked in the file", "Ticked in FEEDBACK.md" in md)
 
-    # --- Hot-reload wipe: reopen #2, reviewer reloads, then #2 gets resolved while page is gone
-    md = open(MD).read(); open(MD, "w").write(md.replace("- [x] **#2**", "- [ ] **#2**")); time.sleep(2.5)
+    # -- the agent un-ticks it again; the reviewer sees it reopen
+    edit_md("- [x] **#2**", "- [ ] **#2**")
+    check("un-ticking reopens the pin", poll(lambda: "2:open" in r.evaluate(PINS), timeout=8), r.evaluate(PINS))
+
+    # -- hot reload wipes the page while a note gets resolved: the moment still plays afterwards
     r.reload(); r.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(1)
-    print("reopened, reviewer sees:", r.evaluate(PINS))
+    check("after reload the note is still open", "2:open" in r.evaluate(PINS), r.evaluate(PINS))
     r.close()
-    md = open(MD).read(); open(MD, "w").write(md.replace("- [ ] **#2**", "- [x] **#2**")); time.sleep(1.5)
+    edit_md("- [ ] **#2**", "- [x] **#2**")
+    check("server picked up the tick while nobody was watching",
+          poll(lambda: "## Resolved (2)" in FEEDBACK_MD.read_text(), timeout=4))
     r = ctx.new_page(); r.on("pageerror", lambda e: errs.append(str(e)))
-    r.goto(URL); r.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(1.2)
-    print("after reload, toasts:", r.evaluate(TOASTS))
+    mount(r)
+    toasts = poll(lambda: r.evaluate(TOASTS), timeout=4)
+    check("green-pin toast plays on the fresh page", any(re.search(r"note 2 resolved", t, re.I) for t in toasts), toasts)
 
-    # --- Narrow carousel: pins must hide when their card scrolls out of the clip
-    r.evaluate("""() => { const c = document.getElementById('beans'); c.style.width='560px'; c.style.margin='0 auto'; c.scrollLeft = 0; }"""); time.sleep(0.3)
-    print("narrow carousel at 0:", r.evaluate(PINS))
-    r.evaluate("document.getElementById('beans').scrollLeft = 700"); time.sleep(0.3)
-    print("narrow carousel at 700:", r.evaluate(PINS))
-    r.screenshot(path=SH+"12_narrow_carousel.png")
+    # -- pins hide when their card scrolls out of a clipped carousel
+    r.evaluate("""() => { const c = document.getElementById('beans'); c.style.width='560px'; c.style.margin='0 auto'; c.scrollLeft = 0; }"""); time.sleep(0.4)
+    hidden = r.evaluate(PINS)
+    check("narrow carousel at 0: pin 2 hidden (card clipped)", "2:green:hidden" in hidden, hidden)
+    r.evaluate("document.getElementById('beans').scrollLeft = 700"); time.sleep(0.4)
+    shown = r.evaluate(PINS)
+    check("narrow carousel at 700: pin 2 visible", "2:green" in shown, shown)
+    shot(r, "12_narrow_carousel.png")
     ctx.close()
 
-    # --- Phone
-    iphone = p.devices["iPhone 13"]
-    m = b.new_context(**iphone, extra_http_headers={"cf-connecting-ip":"203.0.113.10"})
+    # -- phone
+    m = b.new_context(**p.devices["iPhone 13"], extra_http_headers={"cf-connecting-ip": "203.0.113.10"})
     mp = m.new_page(); mp.on("pageerror", lambda e: errs.append(str(e)))
-    mp.goto(URL); mp.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(1)
-    mp.screenshot(path=SH+"13_phone_start.png")
-    mp.locator("feedback-tunnel").locator(".bar .comment").tap(); time.sleep(0.3)
-    mp.locator("feedback-tunnel").locator(".opt[data-id=owl]").tap()
-    mp.locator("feedback-tunnel").get_by_text("Start commenting").tap(); time.sleep(0.3)
+    mount(mp)
+    shot(mp, "13_phone_start.png")
+    bar_in_view = """() => { const r = document.querySelector('feedback-tunnel').shadowRoot.querySelector('.bar').getBoundingClientRect();
+      const v = window.visualViewport; return r.left >= v.offsetLeft - 1 && r.right <= v.offsetLeft + v.width + 1 && r.bottom <= v.offsetTop + v.height + 1 }"""
+    check("toolbar starts inside the visual viewport", mp.evaluate(bar_in_view))
+    ft = mp.locator("feedback-tunnel")
+    ft.locator(".bar .comment").tap(); time.sleep(0.3)
+    ft.locator(".opt[data-id=owl]").tap()
+    ft.get_by_text("Start commenting").tap(); time.sleep(0.3)
     btn = mp.get_by_text("Choose Pair"); btn.scroll_into_view_if_needed(); time.sleep(0.3)
-    bb = btn.bounding_box(); mp.touchscreen.tap(bb["x"]+bb["width"]/2, bb["y"]+bb["height"]/2); time.sleep(0.4)
-    mp.locator("feedback-tunnel").locator("textarea").fill("Pair is the plan most people pick. Could it be highlighted?")
-    mp.screenshot(path=SH+"14_phone_composer.png")
-    print("visual viewport:", mp.evaluate("[visualViewport.offsetLeft, visualViewport.offsetTop, visualViewport.scale, innerWidth]"))
-    mp.locator("feedback-tunnel").get_by_text("Post note").dispatch_event("click"); time.sleep(0.5)
-    mp.screenshot(path=SH+"15_phone_posted.png")
-    print("phone pins:", mp.evaluate(PINS))
-    print("errors:", errs or "none")
+    bb = btn.bounding_box(); mp.touchscreen.tap(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2); time.sleep(0.4)
+    ft.locator("textarea").fill("Pair is the plan most people pick. Could it be highlighted?")
+    shot(mp, "14_phone_composer.png")
+    composer_top = mp.evaluate("""() => { const c = document.querySelector('feedback-tunnel').shadowRoot.querySelector('.note, .composer'); return c ? c.getBoundingClientRect().top : null }""")
+    check("composer sits near the top on a phone (keyboard-safe)", composer_top is not None and composer_top < 200, composer_top)
+    ft.get_by_text("Post note").dispatch_event("click")
+    check("phone note appears as a pin", poll(lambda: any(s.startswith("3:open") for s in mp.evaluate(PINS)), timeout=5), mp.evaluate(PINS))
+    shot(mp, "15_phone_posted.png")
+    check("toolbar still inside the visual viewport", mp.evaluate(bar_in_view))
+    md = FEEDBACK_MD.read_text()
+    check("FEEDBACK.md: phone note records the device", re.search(r"Viewport: 390×\d+, .*iPhone", md) is not None)
+    check("FEEDBACK.md: anonymous owl attribution", "Note from Anonymous Owl," in md)
+    check("no page errors", errs == [], errs)
     b.close()
+finish()

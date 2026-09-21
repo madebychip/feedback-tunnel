@@ -2,13 +2,42 @@
   "name": "feedback-tunnel",
   "version": "0.1.0",
   "description": "Share a localhost prototype with one link. Reviewers leave sticky notes on it; notes land in FEEDBACK.md for your coding agent.",
+  "author": "Chip Dong Lim",
   "type": "module",
   "bin": {
     "feedback-tunnel": "bin/feedback-tunnel.js"
   },
-  "files": ["bin", "src", "client", "avatars"],
+  "files": [
+    "bin",
+    "src",
+    "client",
+    "avatars"
+  ],
+  "scripts": {
+    "test": "node test/run.mjs",
+    "test:setup": "npm --prefix test/viteapp install && npm --prefix test/nextapp install",
+    "test:tunnel": "node test/run.mjs tunnel"
+  },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/madebychip/feedback-tunnel.git"
+  },
+  "homepage": "https://github.com/madebychip/feedback-tunnel#readme",
+  "bugs": {
+    "url": "https://github.com/madebychip/feedback-tunnel/issues"
+  },
+  "keywords": [
+    "prototype",
+    "design-review",
+    "feedback",
+    "cloudflared",
+    "tunnel",
+    "claude-code",
+    "cursor",
+    "localhost"
+  ]
 }

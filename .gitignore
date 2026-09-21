@@ -2,3 +2,6 @@ node_modules
 .feedback-tunnel
 .DS_Store
 .claude/
+.next/
+__pycache__/
+test/.work/
