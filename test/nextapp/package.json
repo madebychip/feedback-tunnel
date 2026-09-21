@@ -1,0 +1,6 @@
+{
+  "name": "nextapp",
+  "private": true,
+  "scripts": { "dev": "next dev" },
+  "dependencies": { "next": "^16.3.0", "react": "^19.0.0", "react-dom": "^19.0.0" }
+}

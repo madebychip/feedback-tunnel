@@ -225,7 +225,7 @@
     const i = s.lastIndexOf('/src/');
     return i >= 0 ? s.slice(i + 1) : s.split('/').slice(-3).join('/');
   };
-  const FRAMEWORK = /^(Anonymous|Fragment|Suspense|StrictMode|Router|LayoutRouter|InnerLayoutRouter|OuterLayoutRouter|RenderFromTemplateContext|HotReload|ReactDevOverlay|AppRouter|ServerRoot|Root|Head|Html|Body|SegmentViewNode|ClientPageRoot|ClientSegmentRoot|RouteAnnouncer|AppContainer)$|(Provider|Consumer|Boundary|Context|Handler|Adapter)$/;
+  const FRAMEWORK = /^(Anonymous|Fragment|Suspense|StrictMode|Router|LayoutRouter|InnerLayoutRouter|OuterLayoutRouter|RenderFromTemplateContext|HotReload|ReactDevOverlay|AppRouter|ServerRoot|Root|Head|Html|Body|SegmentViewNode|ClientPageRoot|ClientSegmentRoot|RouteAnnouncer|AppContainer|HistoryUpdater|SegmentBoundaryTriggerNode)$|(Provider|Consumer|Boundary|Context|Handler|Adapter)$|^(Inner|Outer)\w*(Router|Handler|Boundary)\w*$|ScrollAndFocus|ScrollAndMaybeFocus|ScrollHandler|DevRoot/;
 
   // Component names help a coding agent jump to the right file.
   function componentPath(el) {

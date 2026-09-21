@@ -168,7 +168,7 @@ const suites = {
       });
       await waitFor(`http://localhost:${nextPort}/`, 'Next.js');
       const px = await startProxy('next', nextPort, ['--no-tunnel']);
-      const ok = await py('e2e_next.py', { FT_URL: px.url, FT_PROJECT: px.cwd });
+      const ok = await py('e2e_next.py', { FT_URL: px.url, FT_PROJECT: px.cwd, FT_APP: appFile });
       if (!ok) console.log(app.log().split('\n').slice(-15).join('\n'));
       return ok;
     } finally {
