@@ -1,0 +1,14 @@
+{
+  "name": "feedback-tunnel",
+  "version": "0.1.0",
+  "description": "Share a localhost prototype with one link. Reviewers leave sticky notes on it; notes land in FEEDBACK.md for your coding agent.",
+  "type": "module",
+  "bin": {
+    "feedback-tunnel": "bin/feedback-tunnel.js"
+  },
+  "files": ["bin", "src", "client", "avatars"],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

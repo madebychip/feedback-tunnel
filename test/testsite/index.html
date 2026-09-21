@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kopi Club — prototype</title>
+<style>
+body{margin:0;font:16px/1.5 Georgia,serif;background:#f6f1e7;color:#2b2118}
+nav{display:flex;justify-content:space-between;align-items:center;padding:18px 40px;border-bottom:1px solid #d9cdb8}
+nav a{color:#2b2118;margin-left:20px;text-decoration:none}
+.hero{padding:70px 40px 50px;max-width:760px}
+h1{font-size:54px;line-height:1.05;margin:0 0 18px}
+.cta{display:inline-block;background:#7a3e12;color:#fff;padding:14px 22px;border-radius:6px;text-decoration:none;font-family:system-ui}
+.carousel{display:flex;gap:16px;overflow-x:auto;padding:10px 40px 30px;scroll-snap-type:x mandatory}
+.card{flex:0 0 260px;height:180px;background:#fff;border-radius:10px;padding:18px;scroll-snap-align:start;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.pricing{padding:40px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.plan{background:#fff;padding:24px;border-radius:10px}
+.plan button{margin-top:12px;padding:10px 16px;border:1px solid #7a3e12;background:none;border-radius:6px;cursor:pointer}
+footer{padding:40px;color:#7d6b58}
+</style></head><body>
+<nav><strong>Kopi Club</strong><div><a href="/menu">Menu</a><a href="/about">About</a><a href="#">Sign in</a></div></nav>
+<section class="hero"><h1>Fresh kopi, delivered before your first meeting.</h1>
+<p>Weekly beans from roasters across Singapore and Johor. Pause any time.</p>
+<a class="cta" href="#" onclick="alert('navigated!');return false;">Start my subscription</a></section>
+<h2 style="padding:0 40px;margin:0 0 8px">This week's beans</h2>
+<div class="carousel" id="beans">
+<div class="card"><h3>Kampong Robusta</h3><p>Dark, buttery, a little smoky.</p></div>
+<div class="card"><h3>Ipoh White</h3><p>Margarine-roasted, sweet finish.</p></div>
+<div class="card"><h3>Sumatra Lintong</h3><p>Earthy with cedar notes.</p></div>
+<div class="card"><h3>Bali Kintamani</h3><p>Citrus, bright, clean.</p></div>
+<div class="card"><h3>Sabah Liberica</h3><p>Jackfruit and smoke.</p></div>
+<div class="card"><h3>Java Preanger</h3><p>Chocolate and spice.</p></div>
+</div>
+<section class="pricing">
+<div class="plan"><h3>Solo</h3><p>250g a week</p><button>Choose Solo</button></div>
+<div class="plan"><h3>Pair</h3><p>500g a week</p><button>Choose Pair</button></div>
+<div class="plan"><h3>Office</h3><p>2kg a week</p><button>Choose Office</button></div>
+</section>
+<footer>© Kopi Club. Prototype only.</footer>
+<div style="height:600px"></div>
+</body></html>

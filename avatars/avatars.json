@@ -1,0 +1,18 @@
+[
+  { "id": "axolotl",  "name": "Axolotl",  "color": "#D81B60" },
+  { "id": "capybara", "name": "Capybara", "color": "#6D4C41" },
+  { "id": "dolphin",  "name": "Dolphin",  "color": "#00ACC1" },
+  { "id": "fox",      "name": "Fox",      "color": "#F4511E" },
+  { "id": "frog",     "name": "Frog",     "color": "#7CB342" },
+  { "id": "koala",    "name": "Koala",    "color": "#546E7A" },
+  { "id": "lemur",    "name": "Lemur",    "color": "#8E24AA" },
+  { "id": "narwhal",  "name": "Narwhal",  "color": "#3949AB" },
+  { "id": "otter",    "name": "Otter",    "color": "#00897B" },
+  { "id": "owl",      "name": "Owl",      "color": "#F6BF26" },
+  { "id": "panda",    "name": "Panda",    "color": "#3C4043" },
+  { "id": "penguin",  "name": "Penguin",  "color": "#1A73E8" },
+  { "id": "quokka",   "name": "Quokka",   "color": "#C0CA33" },
+  { "id": "turtle",   "name": "Turtle",   "color": "#0B8043" },
+  { "id": "whale",    "name": "Whale",    "color": "#E53935" },
+  { "id": "yak",      "name": "Yak",      "color": "#5E35B1" }
+]

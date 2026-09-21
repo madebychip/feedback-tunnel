@@ -1,0 +1,4 @@
+{ "name": "viteapp", "private": true, "type": "module",
+  "scripts": { "dev": "vite --port 5173 --strictPort" },
+  "dependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" },
+  "devDependencies": { "vite": "^7.0.0", "@vitejs/plugin-react": "^5.0.0" } }
