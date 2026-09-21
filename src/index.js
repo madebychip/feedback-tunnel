@@ -57,7 +57,7 @@ export async function start({ target, port, tunnel, out, cwd }) {
     tun = startTunnel(port, {
       onUrl(url) {
         console.log(`\n  ${bold('Share this link')}  ${green(bold(url))}`);
-        console.log(`  ${dim('It can take a few seconds to go live. It stops working when you quit.')}\n`);
+        console.log(`  ${dim('It stops working when you quit. Your notes stay on disk.')}\n`);
       },
       onMissing() {
         console.log(`\n  ${yellow('cloudflared is not installed')}, so there's no public link yet.`);

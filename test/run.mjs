@@ -177,7 +177,8 @@ const suites = {
     }
   },
 
-  // The real thing: cloudflared quick tunnel, reviewer connecting from the public URL.
+  // The real thing: a cloudflared quick tunnel in front of the Vite app, with a
+  // reviewer browsing from the public trycloudflare.com URL.
   async tunnel() {
     const which = spawnSync('cloudflared', ['--version'], { encoding: 'utf8' });
     if (which.error) {
@@ -185,25 +186,34 @@ const suites = {
       return null;
     }
     console.log(`  ${(which.stdout || which.stderr).trim()}`);
-    const sitePort = await freePort();
-    run(process.execPath, [path.join(HERE, 'testsite', 'server.mjs')], { env: { ...process.env, PORT: String(sitePort) } });
-    await waitFor(`http://localhost:${sitePort}/`, 'the test site');
-    const cwd = makeProject('tunnel');
-    const port = await freePort();
-    const proc = run(process.execPath, [BIN, String(sitePort), '--port', String(port)], { cwd });
-    const url = await new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error(`No tunnel URL within 60s. Output:\n${proc.log()}`)), 60000);
-      const iv = setInterval(() => {
-        const m = proc.log().match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
-        if (m) {
-          clearTimeout(t);
-          clearInterval(iv);
-          resolve(m[0]);
-        }
-      }, 300);
-    });
-    console.log(`  tunnel URL scraped: ${url}`);
-    return await py('e2e_tunnel.py', { FT_URL: `${url}/`, FT_LOCAL: `http://127.0.0.1:${port}/`, FT_PROJECT: cwd });
+    const dir = path.join(HERE, 'viteapp');
+    if (!needInstalled(dir, 'npm run test:setup')) return null;
+    const appFile = path.join(dir, 'src', 'App.jsx');
+    const original = fs.readFileSync(appFile, 'utf8');
+    try {
+      const vitePort = await freePort();
+      run(path.join(dir, 'node_modules', '.bin', 'vite'), ['--port', String(vitePort), '--strictPort'], { cwd: dir });
+      await waitFor(`http://localhost:${vitePort}/`, 'Vite');
+      const px = await startProxy('tunnel', vitePort, []); // no --no-tunnel
+      const started = Date.now();
+      const url = await new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error(`No tunnel URL within 60s. Proxy output:\n${px.log()}`)), 60000);
+        const iv = setInterval(() => {
+          const m = px.log().match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
+          if (m) {
+            clearTimeout(t);
+            clearInterval(iv);
+            resolve(m[0]);
+          }
+        }, 200);
+      });
+      console.log(`  banner printed the link after ${((Date.now() - started) / 1000).toFixed(1)}s: ${url}`);
+      const ok = await py('e2e_tunnel.py', { FT_URL: `${url}/`, FT_LOCAL: px.url, FT_PROJECT: px.cwd, FT_APP: appFile });
+      if (!ok) console.log(`\n--- proxy output ---\n${px.log()}`);
+      return ok;
+    } finally {
+      fs.writeFileSync(appFile, original);
+    }
   },
 };
 

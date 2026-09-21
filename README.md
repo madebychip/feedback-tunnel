@@ -9,12 +9,15 @@ One command turns the prototype running on your laptop into a link anyone can le
 ```bash
 brew install cloudflared          # once. Windows: winget install Cloudflare.cloudflared
 
+git clone https://github.com/madebychip/feedback-tunnel.git ~/code/feedback-tunnel
+(cd ~/code/feedback-tunnel && npm link)   # once; gives you the `feedback-tunnel` command
+
 cd your-project                   # run it from your project root
 npm run dev                       # your prototype, say on port 3000
-node ~/code/feedback-tunnel/bin/feedback-tunnel.js 3000
+feedback-tunnel 3000
 ```
 
-Or run `npm link` inside this folder once, then just `feedback-tunnel 3000`. After it's published it will be `npx feedback-tunnel 3000`.
+After it's published to npm this becomes `npx feedback-tunnel 3000`.
 
 ```
   feedback-tunnel v0.1
@@ -26,7 +29,7 @@ Or run `npm link` inside this folder once, then just `feedback-tunnel 3000`. Aft
   Share this link  https://quiet-marble-otter.trycloudflare.com
 ```
 
-Send the link. It stops working the moment you quit, and your notes stay on disk.
+The link only appears once it works. Cloudflare prints a quick tunnel's address a few seconds before its DNS record exists, and a visitor who opens it in that gap gets a "not found" that their resolver then remembers, so feedback-tunnel waits for Cloudflare's nameservers to know the name first. Send the link. It stops working the moment you quit, and your notes stay on disk.
 
 ## How a round of feedback goes
 
@@ -89,7 +92,7 @@ feedback-tunnel <port or url> [options]
 
 **Framework host checks are handled.** Vite and Next.js dev servers normally reject requests from a `trycloudflare.com` address. feedback-tunnel rewrites the host headers, so the dev server thinks it's being visited on localhost. No `allowedHosts` config needed.
 
-**Quick tunnels have limits.** Cloudflare caps a quick tunnel at 200 requests in flight. A large Vite app loads hundreds of separate modules on first visit and can hit that. If a reviewer gets a blank page, build it and share the preview server instead: `vite build && vite preview`, then `feedback-tunnel 4173`.
+**Quick tunnels have limits.** Cloudflare caps a quick tunnel at 200 requests in flight, and every open websocket (Vite's hot reload, for one) uses a slot. Measured against a real tunnel: of 260 requests held open at once, 199 were served and 61 got an HTTP 429. A large Vite app loads hundreds of separate modules on first visit and can hit that. If a reviewer gets a blank page, build it and share the preview server instead: `vite build && vite preview`, then `feedback-tunnel 4173`.
 
 **Anyone with the link can comment.** The address is random and dies when you quit, but don't share a prototype that has real API keys in its front-end code.
 
@@ -104,3 +107,14 @@ Where notes live: `.feedback-tunnel/comments.json` is the source of truth and ig
 ## Not in v0.1
 
 Pins on text selections and dragged areas, session replays, live cursors, replies, voice notes, a passcode, a QR code and an MCP server. Pins can't go inside cross-origin iframes or canvas/WebGL content.
+
+## Development
+
+```bash
+pip install playwright && playwright install chromium
+npm run test:setup      # sample React/Vite and Next.js apps
+npm test                # end-to-end suites in a real headless browser
+npm run test:tunnel     # the same reviewer flow over a real cloudflared quick tunnel
+```
+
+See [test/README.md](test/README.md) for what each suite covers.
