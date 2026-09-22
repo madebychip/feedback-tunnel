@@ -71,9 +71,10 @@
     return el;
   }
 
-  // Lucide (lucide.dev), ISC licence: message-circle, list, check, x, arrow-up, circle-check.
+  // Lucide (lucide.dev), ISC licence: list, check, x, arrow-up, circle-check.
+  // note is a custom filled teardrop, not Lucide - it matches the pin markers' own shape.
   const I = {
-    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>',
+    note: '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20H0V10C0 4.477 4.477 0 10 0Z"/></svg>',
     list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
@@ -415,21 +416,23 @@ h2,h3,p{margin:0}
 .compose-send.active{background:var(--c)}
 .note.sheet{left:12px;right:12px;width:auto;top:calc(60px + env(safe-area-inset-top));transform:none!important}
 
-.bar{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:2px;padding:4px;background:var(--background);border-radius:var(--radius-full);border:1px solid var(--border);box-shadow:var(--shadow-card)}
-.bar-me{width:36px;height:36px;display:grid;place-items:center;border-radius:50%}
-.bar-me:hover{background:var(--hover)}
-.anon{width:28px;height:28px;border-radius:50%;border:1.5px dashed rgba(0,0,0,.28);display:grid;place-items:center;color:var(--sub);font-weight:600}
-.bar-btn{height:36px;padding:0 12px;border-radius:var(--radius-full);display:flex;align-items:center;gap:7px;font-weight:500;color:var(--foreground)}
-.bar-btn:hover{background:var(--hover)}
-.bar-btn svg{width:18px;height:18px;display:block}
-.bar .comment[aria-pressed="true"]{background:var(--me);color:var(--mi)}
+.bar{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;background:var(--foreground);color:#fff;border-radius:var(--radius-full);box-shadow:var(--shadow-card);padding:10px 20px;transition:width .22s cubic-bezier(.2,.8,.3,1)}
+.bar-row{display:flex;align-items:center;gap:20px}
+.bar-btn{position:relative;display:flex;align-items:center;gap:8px;color:#fff}
+.bar-btn:not(.comment){opacity:.9}
+.bar-btn:hover{opacity:1}
+.bar-btn.comment svg{width:20px;height:20px;display:block}
+.bar-btn:not(.comment) svg{width:24px;height:24px;display:block}
+.bar .comment[aria-pressed="true"]{opacity:.55}
+.tooltip{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:var(--foreground);font-size:12px;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+.bar-btn.comment:hover .tooltip,.bar-btn.comment:focus-visible .tooltip{opacity:1;transform:translateX(-50%) translateY(0)}
+.tooltip kbd{border-color:rgba(255,255,255,.5);opacity:.8}
+.badge{width:24px;height:24px;border-radius:50%;background:#484848;font-size:12px;font-variant-numeric:tabular-nums;display:grid;place-items:center}
+.bar-label{font-size:13px;font-weight:500;color:#fff;white-space:nowrap}
+.done{height:24px;padding:0 12px;border-radius:var(--radius-full);background:rgba(255,255,255,.16);font-weight:500;font-size:12.5px;color:#fff;white-space:nowrap}
+.done:hover{background:rgba(255,255,255,.24)}
 kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;border-radius:4px;border:1px solid currentColor;opacity:.5;display:grid;place-items:center;line-height:1}
-.count{font-variant-numeric:tabular-nums}
-.bar.offline::after{content:"";width:8px;height:8px;border-radius:50%;background:#f9ab00;margin:0 10px 0 4px}
-@media (max-width:420px){.bar-btn .lbl{display:none}}
-
-.banner{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:5px 5px 5px 16px;border-radius:var(--radius-full);background:var(--foreground);color:#fff;font-weight:500;box-shadow:var(--shadow-popover);white-space:nowrap;animation:fade .2s}
-.banner button{height:28px;padding:0 12px;border-radius:var(--radius-full);background:rgba(255,255,255,.24);font-weight:500}
+.bar.offline::after{content:"";width:8px;height:8px;border-radius:50%;background:#f9ab00;margin-left:10px;align-self:center}
 
 .panel{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;bottom:calc(70px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 24px));background:var(--background);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-popover);overflow:auto;overscroll-behavior:contain;padding:14px 8px 16px;animation:fade .15s}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:0 8px 6px}
@@ -495,13 +498,10 @@ label.lab .field{margin-top:6px}
     ui.hlLabel = h('span', { class: 'hl-label' });
     ui.hl = h('div', { class: 'hl', hidden: true }, ui.hlLabel);
     ui.floating = h('div', { class: 'floating' });
-    ui.banner = h('div', { class: 'banner ui', hidden: true, role: 'status' },
-      touch ? 'Tap anything to leave a note' : 'Click anything to leave a note',
-      h('button', { onclick: () => setMode('browse') }, 'Done'));
     ui.panel = h('aside', { class: 'panel ui', hidden: true, 'aria-label': 'Notes' });
     ui.toasts = h('div', { class: 'toasts', 'aria-live': 'polite' });
     ui.bar = buildBar();
-    root.append(ui.pins, ui.hl, ui.floating, ui.banner, ui.panel, ui.toasts, ui.bar);
+    root.append(ui.pins, ui.hl, ui.floating, ui.panel, ui.toasts, ui.bar);
 
     // Keep our keystrokes and clicks from reaching the prototype's own handlers
     // (global hotkeys, click-outside-to-close menus, and so on).
@@ -514,24 +514,45 @@ label.lab .field{margin-top:6px}
   }
 
   function buildBar() {
-    ui.meBtn = h('button', { class: 'bar-me', onclick: () => openIdentity() });
     ui.commentBtn = h('button', {
-      class: 'bar-btn comment', 'aria-pressed': 'false',
+      class: 'bar-btn comment', 'aria-pressed': 'false', 'aria-label': 'Comment',
       onclick: () => setMode(S.mode === 'comment' ? 'browse' : 'comment'),
-    }, h('span', { html: I.note }), h('span', { class: 'lbl' }, 'Comment'), touch ? null : h('kbd', {}, 'C'));
+    },
+      h('span', { html: I.note }),
+      h('span', { class: 'tooltip', role: 'tooltip' }, 'Comment', touch ? null : h('kbd', {}, 'C')));
     ui.count = h('span', { class: 'count' }, '0');
     ui.listBtn = h('button', { class: 'bar-btn', 'aria-expanded': 'false', onclick: togglePanel },
-      h('span', { html: I.list }), ui.count);
-    return h('div', { class: 'bar ui', role: 'toolbar', 'aria-label': 'Feedback' }, ui.meBtn, ui.commentBtn, ui.listBtn);
+      h('span', { html: I.list }), h('span', { class: 'badge' }, ui.count));
+    ui.resting = h('div', { class: 'bar-row' }, ui.commentBtn, ui.listBtn);
+
+    ui.doneBtn = h('button', { class: 'done', onclick: () => setMode('browse') }, 'Done');
+    ui.commenting = h('div', { class: 'bar-row', hidden: true },
+      h('span', { class: 'bar-label' }, touch ? 'Tap anything to leave a note' : 'Click anything to leave a note'),
+      ui.doneBtn);
+
+    return h('div', { class: 'bar ui', role: 'toolbar', 'aria-label': 'Feedback' }, ui.resting, ui.commenting);
+  }
+
+  // Resizes the bar smoothly between its two rows (a lightweight FLIP: measure
+  // the width it's leaving, swap which row is visible, measure the width it's
+  // entering, then animate old -> new) instead of an abrupt reflow.
+  function morphBar(commenting) {
+    const from = ui.bar.getBoundingClientRect().width;
+    ui.resting.hidden = commenting;
+    ui.commenting.hidden = !commenting;
+    const to = ui.bar.getBoundingClientRect().width;
+    ui.bar.style.overflow = 'hidden';
+    ui.bar.style.width = `${from}px`;
+    void ui.bar.offsetWidth;
+    ui.bar.style.width = `${to}px`;
+    clearTimeout(morphBar.t);
+    morphBar.t = setTimeout(() => { ui.bar.style.width = ''; ui.bar.style.overflow = ''; }, 260);
   }
 
   function applyMe() {
     const c = meColor();
     root.style.setProperty('--me', c);
     root.style.setProperty('--mi', ink(c));
-    ui.meBtn.replaceChildren(S.me ? avatar(S.me, 28) : h('span', { class: 'anon' }, '?'));
-    ui.meBtn.setAttribute('aria-label', S.me ? `You're ${S.me.name}. Change your name.` : 'Choose your name');
-    ui.meBtn.title = S.me ? S.me.name : 'Choose your name';
     cursorStyle();
   }
 
@@ -602,7 +623,7 @@ label.lab .field{margin-top:6px}
     S.mode = m;
     const on = m === 'comment';
     ui.commentBtn.setAttribute('aria-pressed', String(on));
-    ui.banner.hidden = !on;
+    morphBar(on);
     document.documentElement.classList.toggle('ft-commenting', on);
     if (on) cursorStyle();
     else S.hover = null;
