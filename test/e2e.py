@@ -38,7 +38,7 @@ with sync_playwright() as p:
     ta = ft.locator("textarea")
     ta.fill("Can this be bigger? On my phone it's easy to miss, and 'Start my subscription' feels long.")
     shot(r, "04_composer.png")
-    ta.press("Control+Enter")
+    ta.press("Enter")
     check("note 1 appears as an open pin", poll(lambda: "1:open" in r.evaluate(PINS)), r.evaluate(PINS))
     shot(r, "05_posted.png")
 
@@ -47,7 +47,7 @@ with sync_playwright() as p:
     cb = r.locator(".card", has_text="Bali Kintamani").bounding_box()
     r.mouse.click(cb["x"] + cb["width"] * 0.5, cb["y"] + 30); time.sleep(0.3)
     ft.locator("textarea").fill("The snap on this carousel feels abrupt on trackpad.")
-    ft.get_by_text("Post note").click()
+    ft.get_by_role("button", name="Post note").click()
     check("note 2 appears", poll(lambda: "2:open" in r.evaluate(PINS)), r.evaluate(PINS))
     r.keyboard.press("Escape"); time.sleep(0.2)
     shot(r, "06_carousel_pin.png")
@@ -78,7 +78,7 @@ with sync_playwright() as p:
     mount(hp)
     hp.locator("feedback-tunnel").locator(".pin", has=hp.locator(".num", has_text="1")).click(); time.sleep(0.4)
     shot(hp, "07_host_note.png")
-    hp.locator("feedback-tunnel").get_by_role("button", name="Resolve").click(); time.sleep(0.5)
+    hp.locator("feedback-tunnel").get_by_role("button", name="Resolve note").click(); time.sleep(0.5)
     shot(hp, "08_host_resolved.png")
 
     # -- the reviewer watches it turn green (poll interval is 2 s)

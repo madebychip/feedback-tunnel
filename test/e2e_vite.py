@@ -27,7 +27,7 @@ with sync_playwright() as p:
     bb = r.get_by_text("Choose Pair").bounding_box()
     r.mouse.click(bb["x"] + bb["width"] * 0.5, bb["y"] + bb["height"] * 0.5); time.sleep(0.3)
     r.locator("feedback-tunnel").locator("textarea").fill("Make this the recommended plan, with a filled button.")
-    r.locator("feedback-tunnel").locator("textarea").press("Control+Enter")
+    r.locator("feedback-tunnel").locator("textarea").press("Enter")
     check("note posted", poll(lambda: "1:open" in r.evaluate(PINS)), r.evaluate(PINS))
     r.keyboard.press("Escape")
     md = FEEDBACK_MD.read_text()

@@ -69,7 +69,7 @@ with sync_playwright() as p:
     shot(mp, "14_phone_composer.png")
     composer_top = mp.evaluate("""() => { const c = document.querySelector('feedback-tunnel').shadowRoot.querySelector('.note, .composer'); return c ? c.getBoundingClientRect().top : null }""")
     check("composer sits near the top on a phone (keyboard-safe)", composer_top is not None and composer_top < 200, composer_top)
-    ft.get_by_text("Post note").dispatch_event("click")
+    ft.get_by_role("button", name="Post note").dispatch_event("click")
     check("phone note appears as a pin", poll(lambda: any(s.startswith("3:open") for s in mp.evaluate(PINS)), timeout=5), mp.evaluate(PINS))
     shot(mp, "15_phone_posted.png")
     check("toolbar still inside the visual viewport", mp.evaluate(bar_in_view))

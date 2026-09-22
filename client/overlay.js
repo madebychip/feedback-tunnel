@@ -10,6 +10,7 @@
   const KEY_SEEN = 'feedback-tunnel:seen';
   const PIN = 32;
   const NARROW = 560;
+  const COMPOSE_MAXH = 160; // comment-bubble-expanded caps out here, then scrolls
   const touch = matchMedia('(hover: none)').matches;
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   const smooth = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -70,12 +71,14 @@
     return el;
   }
 
-  // Lucide (lucide.dev), ISC licence: message-circle, list, check, x.
+  // Lucide (lucide.dev), ISC licence: message-circle, list, check, x, arrow-up, circle-check.
   const I = {
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>',
     list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>',
+    resolve: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg>',
   };
 
   function ink(hex) {
@@ -372,38 +375,44 @@ h2,h3,p{margin:0}
 .hl.inside .hl-label{bottom:auto;top:4px;left:4px;margin:0}
 
 .floating{position:absolute;inset:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.06)) drop-shadow(0 8px 20px rgba(0,0,0,.12))}
-.note{position:fixed;left:0;top:0;width:296px;padding:14px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
+.note{position:fixed;left:0;top:0;width:296px;padding:12px;background:var(--background);border:1px solid rgba(0,0,0,.13);border-radius:var(--radius);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
 .note.shake{animation:shake .32s}
+.note.bubble{border-radius:12px;border-color:var(--c)}
 @keyframes note-in{from{opacity:0;translate:0 4px}}
 @keyframes shake{25%{translate:-5px 0}75%{translate:5px 0}}
-.note-head{display:flex;align-items:flex-start;gap:10px}
-.who{display:flex;flex-direction:column;min-width:0;flex:1}
-.who strong{font-weight:500;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-head{display:flex;align-items:center;gap:8px}
+.who{display:flex;align-items:baseline;gap:8px;min-width:0;flex:1}
+.who strong{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-head .meta{font-size:9px}
 .meta{color:var(--sub);font-size:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.tag{font-size:11px;padding:0 6px;border-radius:4px;background:var(--secondary)}
-.note-num{font-size:12px;font-weight:500;color:var(--sub);font-variant-numeric:tabular-nums;padding-top:3px}
-.x{width:26px;height:26px;display:grid;place-items:center;border-radius:var(--radius);color:var(--sub);margin:-2px -4px 0 0;flex:none}
+.icon-btn{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;color:var(--sub);flex:none}
+.icon-btn svg{width:14px;height:14px}
+.icon-btn:hover{background:var(--hover)}
+.icon-btn.resolved{background:var(--green);color:#fff}
+.x{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;color:var(--sub);flex:none}
 .x:hover{background:var(--hover)}
-.x svg{width:16px;height:16px}
-.body{margin-top:10px;font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
-.on{margin-top:10px;font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gone{margin-top:6px;font-size:12px;color:#b06000}
-.status{margin-top:12px;display:flex;align-items:center;gap:7px;color:var(--green);font-weight:500;font-size:12.5px}
+.x svg{width:13px;height:13px}
+.on{margin:8px 0 0 24px;display:flex;align-items:center;gap:6px;font-size:9px;color:var(--sub)}
+.tag{font-size:9px;padding:3px 6px;border-radius:4px;background:var(--secondary);color:var(--sub);flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.body{margin:8px 0 0 24px;font-size:12px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
+.gone{margin:6px 0 0 24px;font-size:12px;color:#b06000}
+.status{margin:8px 0 0 24px;display:flex;align-items:center;gap:7px;color:var(--green);font-weight:500;font-size:12.5px}
 .status .dot,.ok{flex:none;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center}
 .status .dot svg,.ok svg{width:11px;height:11px}
 .actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:12px}
-.hint{margin-right:auto;font-size:11.5px;color:var(--sub);white-space:nowrap}
 .btn{height:28px;padding:0 12px;border-radius:var(--radius-full);font-weight:500;font-size:13px;white-space:nowrap}
 .btn.primary{background:var(--c);color:var(--ci)}
 .btn.primary:disabled{opacity:.6;cursor:default}
 .btn.ghost{color:var(--muted-foreground)}
 .btn.ghost:hover{background:var(--hover)}
-.btn.resolve{background:var(--green);color:#fff}
 .btn.sm{height:24px;padding:0 10px;font-size:12px}
 .field{display:block;width:100%;font:inherit;font-size:14px;font-weight:400;color:var(--foreground);background:var(--background);border:1px solid rgba(0,0,0,.12);border-radius:var(--radius);padding:9px 11px;outline:none}
 .field:focus{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 24%,transparent)}
-.ta{margin-top:10px;resize:vertical;min-height:78px;line-height:1.45}
-.err{margin-top:8px;color:#c5221f;font-size:12.5px}
+.compose{display:block;width:100%;font:inherit;font-size:12px;color:var(--foreground);background:transparent;border:0;outline:none;resize:none;line-height:16px;padding:0}
+.compose::placeholder{color:var(--muted-foreground)}
+.compose-send{position:absolute;right:9px;bottom:9px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.28);color:#fff;flex:none;transition:background .15s}
+.compose-send svg{width:13px;height:13px}
+.compose-send.active{background:var(--c)}
 .note.sheet{left:12px;right:12px;width:auto;top:calc(60px + env(safe-area-inset-top));transform:none!important}
 
 .bar{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:2px;padding:4px;background:var(--background);border-radius:var(--radius-full);border:1px solid var(--border);box-shadow:var(--shadow-card)}
@@ -622,30 +631,33 @@ label.lab .field{margin-top:6px}
     closeComposer();
     const color = meColor();
     const anchor = describe(el, offset);
-    const text = h('textarea', { class: 'field ta', rows: '3', maxlength: '4000', placeholder: 'What should change here?', 'aria-label': 'Your note' });
-    const err = h('p', { class: 'err', hidden: true, role: 'alert' });
-    const post = h('button', { class: 'btn primary' }, 'Post note');
-    const card = h('div', { class: 'note ui', style: `--c:${color};--ci:${ink(color)}`, role: 'dialog', 'aria-label': 'New note' },
-      h('div', { class: 'note-head' },
-        avatar(S.me, 28),
-        h('div', { class: 'who' }, h('strong', {}, S.me.name), h('span', { class: 'meta' }, `On ${anchor.label}`))),
-      text, err,
-      h('div', { class: 'actions' },
-        touch ? null : h('span', { class: 'hint' }, `${mac ? '⌘' : 'Ctrl'} + Enter`),
-        h('button', { class: 'btn ghost', onclick: closeComposer }, 'Cancel'),
-        post));
+    // comment-bubble: just the input. You already know what you clicked - the pin's
+    // right there - so no avatar, no "On <element>" callout, no shortcut hint. The
+    // arrow button doubles as the visual cue for "this is how you post" and a real
+    // click target; Enter posts, Shift+Enter makes a new line, Esc cancels (global).
+    const text = h('textarea', {
+      class: 'compose', rows: '1', maxlength: '4000',
+      placeholder: 'What should change here?', 'aria-label': 'Your note',
+    });
+    const send = h('button', { class: 'compose-send', 'aria-label': 'Post note', html: I.send });
+    const card = h('div', { class: 'note bubble ui', style: `--c:${color};--ci:${ink(color)}`, role: 'dialog', 'aria-label': 'New note' }, text, send);
     const pin = makePin({ author: S.me }, true);
     ui.pins.append(pin);
     ui.floating.append(card);
     S.composer = { el, offset, anchor, card, pin, text, x: 0, y: 0, tried: 0 };
 
-    const fail = (msg) => { err.textContent = msg; err.hidden = false; };
+    // comment-bubble-expanded: grows with the text up to COMPOSE_MAXH, then scrolls.
+    // The send button lights up (muted -> --c) once there's something to post.
+    const grow = () => {
+      text.style.height = 'auto';
+      text.style.height = `${Math.min(text.scrollHeight, COMPOSE_MAXH)}px`;
+      send.classList.toggle('active', !!text.value.trim());
+    };
+
     async function submit() {
       const body = text.value.trim();
-      if (!body) { fail('Write a note first.'); text.focus(); return; }
-      err.hidden = true;
-      post.disabled = true;
-      post.textContent = 'Posting…';
+      if (!body) { shake(card); return; }
+      text.disabled = true;
       try {
         const r = await fetch(`${API}/comments`, {
           method: 'POST',
@@ -670,17 +682,19 @@ label.lab .field{margin-top:6px}
         pins.get(d.comment.id)?.dom.classList.add('pop');
         poll();
       } catch (e2) {
-        post.disabled = false;
-        post.textContent = 'Post note';
-        fail(e2.message && e2.message !== 'Failed to fetch' ? e2.message
-          : "Couldn't post the note. The prototype may be offline, so try again in a moment.");
+        text.disabled = false;
+        text.focus();
+        shake(card);
+        toast({ title: e2.message && e2.message !== 'Failed to fetch' ? e2.message
+          : "Couldn't post the note. The prototype may be offline, so try again in a moment." });
       }
     }
-    post.addEventListener('click', submit);
+    text.addEventListener('input', grow);
     text.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
     });
-    requestAnimationFrame(() => text.focus({ preventScroll: true }));
+    send.addEventListener('click', submit);
+    requestAnimationFrame(() => { grow(); text.focus({ preventScroll: true }); });
   }
 
   function closeComposer() {
@@ -787,28 +801,28 @@ label.lab .field{margin-top:6px}
     const resolved = c.status === 'resolved';
     const w = c.context?.viewport?.w;
     const byName = c.resolvedBy?.name && c.resolvedBy.name !== 'FEEDBACK.md' ? ` by ${c.resolvedBy.name}` : '';
-    let action = null;
-    if (S.isHost) {
-      action = resolved
-        ? h('button', { class: 'btn ghost sm', onclick: () => setStatus(c, 'open') }, 'Reopen')
-        : h('button', { class: 'btn resolve', onclick: () => setStatus(c, 'resolved') }, 'Resolve');
-    }
+    // comment-published: the pin outside this card already shows "#N" and, once
+    // resolved, flips to a green check - repeating either inside the card is
+    // redundant. One icon button here does both jobs (resolve / reopen), so there's
+    // no separate bottom action row. "On <element>" and its width both describe the
+    // same target, so they're one line, not split across the header and the body.
+    // Everything below the header lines up under the name, not under the avatar.
     return h('div', { class: 'note ui', style: `--c:${c.author.color};--ci:${ink(c.author.color)}`, role: 'dialog', 'aria-label': `Note ${c.id}` },
       h('div', { class: 'note-head' },
-        avatar(c.author, 28),
-        h('div', { class: 'who' },
-          h('strong', {}, c.author.name),
-          h('span', { class: 'meta' }, timeAgo(c.createdAt), w ? h('span', { class: 'tag' }, `${w}px wide`) : null)),
-        h('span', { class: 'note-num' }, `#${c.id}`),
+        avatar(c.author, 16),
+        h('div', { class: 'who' }, h('strong', {}, c.author.name), h('span', { class: 'meta' }, timeAgo(c.createdAt))),
+        S.isHost ? h('button', {
+          class: 'icon-btn' + (resolved ? ' resolved' : ''),
+          'aria-label': resolved ? 'Reopen note' : 'Resolve note', html: I.resolve,
+          onclick: () => setStatus(c, resolved ? 'open' : 'resolved'),
+        }) : null,
         h('button', { class: 'x', 'aria-label': 'Close note', html: I.close, onclick: closeNote })),
+      h('p', { class: 'on' },
+        h('span', { class: 'tag' }, `On ${c.anchor?.label || 'this element'}`),
+        w ? h('span', {}, `${w}px wide`) : null),
       h('p', { class: 'body' }, c.text),
-      h('p', { class: 'on' }, `On ${c.anchor?.label || 'this element'}`),
       pins.get(c.id)?.orphan ? h('p', { class: 'gone' }, "This element isn't on the page anymore.") : null,
-      resolved || action
-        ? h('div', { class: 'actions', style: resolved ? 'justify-content:space-between' : null },
-          resolved ? h('span', { class: 'status', style: 'margin:0' }, h('span', { class: 'dot', html: I.check }), `Resolved${byName}`) : null,
-          action)
-        : null);
+      resolved ? h('p', { class: 'status' }, h('span', { class: 'dot', html: I.check }), `Resolved${byName}`) : null);
   }
 
   function closeNote() {
