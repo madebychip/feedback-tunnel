@@ -15,7 +15,7 @@
   const smooth = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 
   const S = {
-    isHost: false, avatars: [], byId: {}, me: null,
+    isHost: false, me: null,
     comments: [], version: -1, failures: 0, offline: false,
     mode: 'browse', path: pagePath(), open: null, composer: null,
     panel: false, showResolved: true, hover: null, hlFor: null,
@@ -107,30 +107,31 @@
     return os ? `${b} on ${os}` : b;
   }
 
-  function animal(id) {
-    return S.byId[id] || { id, name: 'Reviewer', color: '#80868b', image: null };
+  // Shadcn/Tailwind's -500 step: readable on white, and ink() (below) already
+  // knows which of these need dark text instead of white (the warm ones do).
+  const PALETTE = ['#ef4444', '#f97316', '#22c55e', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#14b8a6'];
+  const randomColor = () => PALETTE[Math.floor(Math.random() * PALETTE.length)];
+
+  function initial(name) {
+    const t = String(name || '').trim();
+    return t ? t[0].toUpperCase() : '?';
   }
 
-  function avatar(id, size) {
-    const a = animal(id);
+  // `author` is either a comment's `.author`, `S.me`, or a live preview of one:
+  // whatever it is, all that matters here is { name, color }.
+  function avatar(author, size) {
+    const color = author?.color || '#80868b';
     const el = h('span', {
       class: 'av',
       'aria-hidden': 'true',
-      style: `--c:${a.color};--ci:${ink(a.color)};width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px`,
+      style: `--c:${color};--ci:${ink(color)};width:${size}px;height:${size}px;font-size:${Math.round(size * 0.46)}px`,
     });
-    const letters = a.name.slice(0, 2);
-    if (a.image) {
-      const img = h('img', { src: a.image, alt: '', draggable: 'false' });
-      img.addEventListener('error', () => { img.remove(); el.textContent = letters; });
-      el.append(img);
-    } else {
-      el.textContent = letters; // placeholder until you add avatars/<id>.png
-    }
+    el.textContent = initial(author?.name);
     return el;
   }
 
   function meColor() {
-    return S.me ? animal(S.me.avatar).color : '#1a73e8';
+    return S.me ? S.me.color : '#1a73e8';
   }
 
   // ---- Describing and re-finding elements -----------------------------------
@@ -445,13 +446,8 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .sub{margin-top:4px;color:var(--sub);font-size:13.5px}
 .lab{display:block;margin:18px 0 6px;font-size:12.5px;font-weight:650;color:#3c4043}
 label.lab .field{margin-top:6px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.opt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 2px 7px;border-radius:10px}
-.opt:hover{background:var(--hover)}
-.opt-name{font-size:11.5px;color:#3c4043}
-.opt .av{transition:box-shadow .15s}
-.opt[aria-checked="true"] .av{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--c)}
-.opt[aria-checked="true"] .opt-name{font-weight:650;color:#202124}
+.id-row{display:flex;align-items:flex-start;gap:14px;margin-top:18px}
+.id-row .lab{margin:0;flex:1}
 .card .actions{margin-top:18px}
 
 .toasts{position:fixed;right:16px;bottom:calc(70px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;align-items:flex-end;width:min(340px,calc(100vw - 32px))}
@@ -516,13 +512,13 @@ label.lab .field{margin-top:6px}
     const c = meColor();
     root.style.setProperty('--me', c);
     root.style.setProperty('--mi', ink(c));
-    ui.meBtn.replaceChildren(S.me ? avatar(S.me.avatar, 28) : h('span', { class: 'anon' }, '?'));
-    ui.meBtn.setAttribute('aria-label', S.me ? `You're ${S.me.name}. Change your name or animal.` : 'Choose your name and animal');
-    ui.meBtn.title = S.me ? S.me.name : 'Choose your name and animal';
+    ui.meBtn.replaceChildren(S.me ? avatar(S.me, 28) : h('span', { class: 'anon' }, '?'));
+    ui.meBtn.setAttribute('aria-label', S.me ? `You're ${S.me.name}. Change your name.` : 'Choose your name');
+    ui.meBtn.title = S.me ? S.me.name : 'Choose your name';
     cursorStyle();
   }
 
-  // A pin-shaped cursor in your animal's colour while commenting.
+  // A pin-shaped cursor in your colour while commenting.
   function cursorStyle() {
     if (!cursorEl) {
       cursorEl = document.createElement('style');
@@ -533,30 +529,27 @@ label.lab .field{margin-top:6px}
     cursorEl.textContent = `html.ft-commenting,html.ft-commenting *{cursor:url("data:image/svg+xml,${encodeURIComponent(svg)}") 3 23,crosshair!important}`;
   }
 
-  // ---- Identity (name + animal) ---------------------------------------------
+  // ---- Identity (name + colour) ----------------------------------------------
 
   function openIdentity(then) {
     closeModal();
-    let pick = S.me?.avatar || S.avatars[Math.floor(Math.random() * S.avatars.length)].id;
+    const firstTime = !S.me;
+    const color = S.me?.color || randomColor(); // picked once, then kept for the session
     const input = h('input', {
       class: 'field', type: 'text', maxlength: '40', autocomplete: 'name', 'aria-label': 'Your name',
-      value: S.me?.custom ? S.me.name : null, placeholder: `Anonymous ${animal(pick).name}`,
+      value: S.me?.custom ? S.me.name : null, placeholder: 'Anonymous',
     });
-    const card = h('div', { class: 'card', role: 'dialog', 'aria-modal': 'true', 'aria-label': "Who's reviewing?" });
-    const paint = () => {
-      const a = animal(pick);
-      card.style.setProperty('--c', a.color);
-      card.style.setProperty('--ci', ink(a.color));
-      input.placeholder = `Anonymous ${a.name}`;
-      for (const o of options) o.setAttribute('aria-checked', String(o.dataset.id === pick));
-    };
-    const options = S.avatars.map((a) => h('button', {
-      class: 'opt', role: 'radio', 'data-id': a.id, style: `--c:${a.color}`,
-      'aria-label': a.name, onclick: () => { pick = a.id; paint(); },
-    }, avatar(a.id, 44), h('span', { class: 'opt-name' }, a.name)));
+    const preview = avatar({ name: input.value, color }, 52);
+    input.addEventListener('input', () => { preview.textContent = initial(input.value); });
+    const card = h('div', {
+      class: 'card', role: 'dialog', 'aria-modal': 'true',
+      'aria-label': firstTime ? 'What are you looking at?' : 'Your name',
+    });
+    card.style.setProperty('--c', color);
+    card.style.setProperty('--ci', ink(color));
     const save = () => {
       const name = input.value.trim();
-      S.me = { name: name || `Anonymous ${animal(pick).name}`, avatar: pick, custom: !!name };
+      S.me = { name: name || 'Anonymous', color, custom: !!name };
       saved.set(KEY_ME, S.me);
       applyMe();
       closeModal();
@@ -564,16 +557,17 @@ label.lab .field{margin-top:6px}
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
     card.append(
-      h('h2', {}, "Who's reviewing?"),
-      h('p', { class: 'sub' }, 'Your name and animal appear on every note you leave.'),
-      h('label', { class: 'lab' }, 'Your name', input),
-      h('div', { class: 'lab', id: 'ft-animals' }, 'Pick your animal'),
-      h('div', { class: 'grid', role: 'radiogroup', 'aria-labelledby': 'ft-animals' }, options),
+      h('h2', {}, firstTime ? 'What are you looking at?' : 'Your name'),
+      firstTime
+        ? h('p', { class: 'sub' },
+          'This is a working prototype, not the final build. Click Comment, then click anything — a button, a photo, a line of text — to leave a note right on it.')
+        : null,
+      h('div', { class: 'id-row' }, preview, h('label', { class: 'lab' }, 'Your name', input)),
+      firstTime ? h('p', { class: 'sub' }, 'Shown on your notes. Leave it blank to stay anonymous.') : null,
       h('div', { class: 'actions' },
         S.me ? h('button', { class: 'btn ghost', onclick: closeModal }, 'Cancel') : null,
-        h('button', { class: 'btn primary', onclick: save }, S.me ? 'Save' : 'Start commenting')),
+        h('button', { class: 'btn primary', onclick: save }, firstTime ? 'Start commenting' : 'Save')),
     );
-    paint();
     ui.modal = h('div', { class: 'scrim ui', onclick: (e) => { if (e.target === ui.modal) closeModal(); } }, card);
     root.append(ui.modal);
     setTimeout(() => input.focus(), 40);
@@ -625,7 +619,7 @@ label.lab .field{margin-top:6px}
     const post = h('button', { class: 'btn primary' }, 'Post note');
     const card = h('div', { class: 'note ui', style: `--c:${color};--ci:${ink(color)}`, role: 'dialog', 'aria-label': 'New note' },
       h('div', { class: 'note-head' },
-        avatar(S.me.avatar, 28),
+        avatar(S.me, 28),
         h('div', { class: 'who' }, h('strong', {}, S.me.name), h('span', { class: 'meta' }, `On ${anchor.label}`))),
       text, err,
       h('div', { class: 'actions' },
@@ -650,7 +644,7 @@ label.lab .field{margin-top:6px}
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             text: body,
-            author: { name: S.me.name, avatar: S.me.avatar },
+            author: { name: S.me.name, color: S.me.color },
             page: { path: S.path, title: document.title },
             anchor,
             context: {
@@ -697,14 +691,14 @@ label.lab .field{margin-top:6px}
   // ---- Pins -----------------------------------------------------------------
 
   function makePin(c, draft) {
-    const color = animal(c.author.avatar).color;
+    const color = c.author.color || '#80868b';
     return h('button', {
       class: 'pin ui', style: `--c:${color}`,
       'aria-label': draft ? 'New note' : `Note ${c.id} by ${c.author.name}`,
       onclick: draft ? null : () => toggleNote(c.id),
     },
     h('span', { class: 'flip' },
-      h('span', { class: 'face front' }, avatar(c.author.avatar, 24)),
+      h('span', { class: 'face front' }, avatar(c.author, 24)),
       h('span', { class: 'face back', html: I.check })),
     draft ? null : h('span', { class: 'num' }, String(c.id)));
   }
@@ -782,7 +776,6 @@ label.lab .field{margin-top:6px}
   }
 
   function buildNote(c) {
-    const a = animal(c.author.avatar);
     const resolved = c.status === 'resolved';
     const w = c.context?.viewport?.w;
     const byName = c.resolvedBy?.name && c.resolvedBy.name !== 'FEEDBACK.md' ? ` by ${c.resolvedBy.name}` : '';
@@ -792,9 +785,9 @@ label.lab .field{margin-top:6px}
         ? h('button', { class: 'btn ghost sm', onclick: () => setStatus(c, 'open') }, 'Reopen')
         : h('button', { class: 'btn resolve', onclick: () => setStatus(c, 'resolved') }, 'Resolve');
     }
-    return h('div', { class: 'note ui', style: `--c:${a.color};--ci:${ink(a.color)}`, role: 'dialog', 'aria-label': `Note ${c.id}` },
+    return h('div', { class: 'note ui', style: `--c:${c.author.color};--ci:${ink(c.author.color)}`, role: 'dialog', 'aria-label': `Note ${c.id}` },
       h('div', { class: 'note-head' },
-        avatar(c.author.avatar, 28),
+        avatar(c.author, 28),
         h('div', { class: 'who' },
           h('strong', {}, c.author.name),
           h('span', { class: 'meta' }, timeAgo(c.createdAt), w ? h('span', { class: 'tag' }, `${w}px wide`) : null)),
@@ -829,7 +822,7 @@ label.lab .field{margin-top:6px}
       const r = await fetch(`${API}/comments/${c.id}/status`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ status, by: S.me ? { name: S.me.name, avatar: S.me.avatar } : { name: 'Host' } }),
+        body: JSON.stringify({ status, by: S.me ? { name: S.me.name } : { name: 'Host' } }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
@@ -853,7 +846,7 @@ label.lab .field{margin-top:6px}
   function row(c) {
     const done = c.status === 'resolved';
     return h('button', { class: 'row' + (done ? ' done' : ''), onclick: () => focusNote(c.id) },
-      avatar(c.author.avatar, 26),
+      avatar(c.author, 26),
       h('span', { class: 'row-main' },
         h('span', { class: 'row-top' }, h('strong', {}, c.author.name), h('span', { class: 'meta' }, timeAgo(c.createdAt))),
         h('span', { class: 'row-text' }, c.text),
@@ -1100,10 +1093,8 @@ label.lab .field{margin-top:6px}
       return; // not behind the review proxy; stay invisible
     }
     S.isHost = !!b.isHost;
-    S.avatars = b.avatars;
-    S.byId = Object.fromEntries(b.avatars.map((a) => [a.id, a]));
     const me = saved.get(KEY_ME);
-    if (me && S.byId[me.avatar]) S.me = me;
+    if (me && typeof me.name === 'string' && /^#[0-9a-f]{6}$/i.test(me.color || '')) S.me = me;
 
     // Wait for the app to finish loading and hydrating before adding anything to the DOM.
     await new Promise((resolve) => {

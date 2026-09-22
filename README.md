@@ -33,9 +33,9 @@ The link only appears once it works. Cloudflare prints a quick tunnel's address 
 
 ## How a round of feedback goes
 
-**Your reviewer** opens the link and sees your prototype, working as normal. They press **Comment** (or the C key), pick a name and an animal, then click anything to leave a sticky note. While commenting, clicks place notes instead of following links, so they can pin a button without leaving the page.
+**Your reviewer** opens the link and sees your prototype, working as normal. The first time they click **Comment** (or press C), a card explains what's going on and asks for a name — then they click anything to leave a sticky note. While commenting, clicks place notes instead of following links, so they can pin a button without leaving the page.
 
-![Picking an animal](docs/avatar-picker.png)
+![The welcome card, with a live colour preview](docs/welcome.png)
 ![Writing a note on a button](docs/sticky-note.png)
 
 **You** open `http://localhost:4000`. It's the same view, plus a **Resolve** button on every note. Notes also scroll past in your terminal as they arrive.
@@ -58,7 +58,7 @@ Then say "work through FEEDBACK.md".
 
 ```md
 - [ ] **#1** Button “Choose Pair” on `/`
-  - Note from Farah (Fox), 20 Sept 2026, 14:35:
+  - Note from Farah, 20 Sept 2026, 14:35:
     > Make this the recommended plan, with a filled button.
   - Selector: `#root > main > section > div:nth-of-type(2) > button`
   - Element text: "Choose Pair"
@@ -72,11 +72,9 @@ Component names are picked up automatically from React dev builds. Vue and Svelt
 
 The file carries its own standing warning for AI agents. Reviewer text comes through a public link, so it's treated as a description of a UI change, never as instructions.
 
-## Avatars
+## Identity
 
-The 16 animals live in `avatars/avatars.json`, each with a colour. That colour follows the reviewer everywhere: their pins, the tint of their sticky notes, their hover outline and their cursor.
-
-Until you add artwork, each animal shows as a coloured circle with two letters. To add art, drop a file named after the animal's id into `avatars/`, for example `avatars/otter.png`. See [avatars/README.md](avatars/README.md) for sizes. New images show up on the next page load, no restart needed.
+No account, ever. The first time someone comments, they type a name (or leave it blank and stay anonymous) and get a coloured initial, picked at random from a fixed palette and kept for the session. That colour follows them everywhere: their pins, the tint of their sticky notes, their hover outline and their cursor.
 
 ## Options
 

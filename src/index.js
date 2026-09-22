@@ -1,5 +1,5 @@
 import { Store } from './store.js';
-import { createReviewServer, loadAvatars } from './server.js';
+import { createReviewServer } from './server.js';
 import { startTunnel } from './tunnel.js';
 
 const tty = process.stdout.isTTY;
@@ -16,8 +16,6 @@ function short(s, n = 70) {
 }
 
 export async function start({ target, port, tunnel, out, cwd }) {
-  const avatars = loadAvatars();
-
   const store = new Store({
     cwd,
     outFile: out,
@@ -36,7 +34,7 @@ export async function start({ target, port, tunnel, out, cwd }) {
   });
   store.watchMarkdown();
 
-  const server = createReviewServer({ target, store, avatars });
+  const server = createReviewServer({ target, store });
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', resolve);

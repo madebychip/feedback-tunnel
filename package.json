@@ -10,8 +10,7 @@
   "files": [
     "bin",
     "src",
-    "client",
-    "avatars"
+    "client"
   ],
   "scripts": {
     "test": "node test/run.mjs",

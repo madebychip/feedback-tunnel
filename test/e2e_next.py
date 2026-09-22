@@ -34,7 +34,7 @@ with sync_playwright() as p:
     check("HMR websocket goes through the proxy", any("/_next/" in u and URL.split("//")[1].rstrip("/") in u for u in ws), ws)
 
     # Notes: one on the server-rendered heading, one on a client component's button.
-    r.evaluate("localStorage.setItem('feedback-tunnel:me', JSON.stringify({name:'Farah',avatar:'fox',custom:true}))")
+    r.evaluate("localStorage.setItem('feedback-tunnel:me', JSON.stringify({name:'Farah',color:'#f97316',custom:true}))")
     r.reload(); r.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(1)
     r.keyboard.press("c")
     hb = r.locator("h1").bounding_box()

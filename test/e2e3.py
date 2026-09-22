@@ -10,7 +10,7 @@ JSON = {"content-type": "application/json"}
 
 
 def note(text, **over):
-    body = {"text": text, "author": {"name": "Tester", "avatar": "penguin"}, "page": {"path": "/"},
+    body = {"text": text, "author": {"name": "Tester", "color": "#3b82f6"}, "page": {"path": "/"},
             "anchor": {"selector": "main", "tag": "main", "label": "Main content", "offset": {"x": .5, "y": .5}},
             "context": {"viewport": {"w": 1440, "h": 900}}}
     body.update(over)
@@ -24,12 +24,12 @@ with sync_playwright() as p:
     post = lambda body: api.post(BASE + "/__ft/api/comments", data=json.dumps(body), headers=JSON)
     comments = lambda: api.get(BASE + "/__ft/api/comments").json()["comments"]
 
-    menu = post(note("Menu prices feel hidden below the fold.", author={"name": "", "avatar": "penguin"}, page={"path": "/menu"}))
-    orphan = post(note("Where did the promo banner go? I liked it.", author={"name": "Wei Jie", "avatar": "capybara"},
+    menu = post(note("Menu prices feel hidden below the fold.", author={"name": "", "color": "#3b82f6"}, page={"path": "/menu"}))
+    orphan = post(note("Where did the promo banner go? I liked it.", author={"name": "Wei Jie", "color": "#8b5cf6"},
                        anchor={"selector": "#promo", "text": "Free first bag", "tag": "div", "label": "Box “Free first bag”", "offset": {"x": .5, "y": .5}},
                        context={"viewport": {"w": 390, "h": 844}}))
     check("notes on other pages and orphans are accepted", (menu.status, orphan.status) == (201, 201), (menu.status, orphan.status))
-    check("empty name becomes Anonymous <animal>", menu.json()["comment"]["author"]["name"] == "Anonymous Penguin")
+    check("empty name becomes Anonymous", menu.json()["comment"]["author"]["name"] == "Anonymous")
 
     # -- the host's panel
     h = b.new_context(viewport={"width": 1280, "height": 800}).new_page()
@@ -52,9 +52,9 @@ with sync_playwright() as p:
     empty = post(note("   "))
     check("empty note refused (400)", empty.status == 400, empty.status)
     check("malformed JSON refused (400)", api.post(BASE + "/__ft/api/comments", data="{nope", headers=JSON).status == 400)
-    odd = post(note("Avatar id is not on the list", author={"name": "x", "avatar": "../../etc/passwd"}))
-    check("unknown avatar falls back to a real one", odd.json()["comment"]["author"]["avatar"] == "axolotl")
-    long = post(note("x" * 9000, author={"name": "n" * 500, "avatar": "owl"}))
+    odd = post(note("Colour is not a valid hex", author={"name": "x", "color": "../../etc/passwd"}))
+    check("invalid colour falls back to a safe default", odd.json()["comment"]["author"]["color"] == "#80868b")
+    long = post(note("x" * 9000, author={"name": "n" * 500, "color": "#f97316"}))
     c = long.json()["comment"]
     check("text and name are clamped", len(c["text"]) == 4000 and len(c["author"]["name"]) == 40, (len(c["text"]), len(c["author"]["name"])))
     try:
@@ -63,7 +63,6 @@ with sync_playwright() as p:
         big = "connection dropped"  # server destroys the socket on oversize bodies
     check("oversize body refused", big in (400, 413, "connection dropped"), big)
     check("unknown API route is 404", api.get(BASE + "/__ft/api/nope").status == 404)
-    check("path traversal on avatars is refused", api.get(BASE + "/__ft/avatars/..%2f..%2fpackage.json").status == 404)
 
     # -- CSRF: the host-only endpoint refuses a request shaped like a <form enctype="text/plain"> submission.
     # No cf-* headers here (unlike `api` above), so this looks exactly like the host's own browser.

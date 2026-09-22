@@ -25,7 +25,6 @@ with sync_playwright() as p:
     r.keyboard.press("c"); time.sleep(0.4)
     shot(r, "02_identity.png")
     ft = r.locator("feedback-tunnel")
-    ft.locator(".opt[data-id=otter]").click()
     ft.locator("input.field").fill("Maya")
     ft.get_by_text("Start commenting").click(); time.sleep(0.3)
 
@@ -64,7 +63,7 @@ with sync_playwright() as p:
     # -- FEEDBACK.md content
     md = FEEDBACK_MD.read_text()
     check("FEEDBACK.md: note text is quoted", "    > Can this be bigger?" in md)
-    check("FEEDBACK.md: author with animal", "Note from Maya (Otter)" in md)
+    check("FEEDBACK.md: author name", "Note from Maya," in md)
     check("FEEDBACK.md: human label", re.search(r'Link .Start my subscription.', md) is not None)
     check("FEEDBACK.md: card is labelled by its heading", re.search(r'Box .Bali Kintamani.', md) is not None)
     check("FEEDBACK.md: element text is word-spaced", "Bali Kintamani Citrus" in md)

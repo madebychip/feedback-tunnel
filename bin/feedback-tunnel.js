@@ -4,8 +4,8 @@ import { start } from '../src/index.js';
 const HELP = `
   feedback-tunnel <port or url> [options]
 
-  Share a prototype running on localhost. Reviewers open the link, pick an
-  animal, and pin sticky notes on anything. Notes land in FEEDBACK.md.
+  Share a prototype running on localhost. Reviewers open the link, add a
+  name, and pin sticky notes on anything. Notes land in FEEDBACK.md.
 
   Examples
     feedback-tunnel 3000

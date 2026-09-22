@@ -56,7 +56,7 @@ with sync_playwright() as p:
     r.goto(URL); r.wait_for_selector("feedback-tunnel", state="attached", timeout=30000); r.wait_for_selector("text=Choose Pair"); time.sleep(0.8)
     check("page and overlay load in a real browser over https", r.evaluate("location.protocol") == "https:")
     check("HMR websocket connects over wss through Cloudflare", any(u.startswith("wss://") and "trycloudflare.com" in u for u in ws), ws)
-    r.evaluate("localStorage.setItem('feedback-tunnel:me', JSON.stringify({name:'Farah',avatar:'fox',custom:true}))")
+    r.evaluate("localStorage.setItem('feedback-tunnel:me', JSON.stringify({name:'Farah',color:'#f97316',custom:true}))")
     r.reload(); r.wait_for_selector("feedback-tunnel", state="attached"); r.wait_for_selector("text=Choose Pair"); time.sleep(0.8)
     r.keyboard.press("c")
     bb = r.get_by_text("Choose Pair").bounding_box()
@@ -66,7 +66,7 @@ with sync_playwright() as p:
     check("note posted through the tunnel", poll(lambda: "1:open" in r.evaluate(PINS)), r.evaluate(PINS))
     r.keyboard.press("Escape")
     md = FEEDBACK_MD.read_text()
-    check("note landed in FEEDBACK.md on the host's disk", "Note from Farah (Fox)" in md and "Choose Pair" in md)
+    check("note landed in FEEDBACK.md on the host's disk", "Note from Farah," in md and "Choose Pair" in md)
     shot(r, "20_tunnel_reviewer.png")
 
     # -- hot reload reaches the reviewer through the tunnel

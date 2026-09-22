@@ -8,20 +8,8 @@ import { gitUserName } from './store.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OVERLAY_FILE = path.join(ROOT, 'client', 'overlay.js');
-const AVATAR_DIR = path.join(ROOT, 'avatars');
 const PREFIX = '/__ft/';
 const TAG = '<script src="/__ft/overlay.js" defer data-feedback-tunnel></script>';
-const IMAGE_TYPES = { png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml', jpg: 'image/jpeg', jpeg: 'image/jpeg' };
-
-// ---- Avatars ----------------------------------------------------------------
-
-export function loadAvatars() {
-  const list = JSON.parse(fs.readFileSync(path.join(AVATAR_DIR, 'avatars.json'), 'utf8'));
-  return list.map((a) => {
-    const ext = Object.keys(IMAGE_TYPES).find((e) => fs.existsSync(path.join(AVATAR_DIR, `${a.id}.${e}`)));
-    return { ...a, image: ext ? `/__ft/avatars/${a.id}.${ext}` : null };
-  });
-}
 
 // ---- Helpers ----------------------------------------------------------------
 
@@ -104,6 +92,10 @@ function readJson(req, limit = 64 * 1024) {
 
 const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
 const num = (v, lo, hi, d = 0) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
+// A reviewer's own colour is client-picked (see client/overlay.js's PALETTE), not
+// server-known, so validate the shape rather than checking against an allowlist.
+const HEX = /^#[0-9a-f]{6}$/i;
+const color = (v) => (HEX.test(v) ? v : '#80868b');
 
 function decode(buf, encoding) {
   switch ((encoding || '').toLowerCase()) {
@@ -147,11 +139,10 @@ function offlinePage(target) {
 
 // ---- Server -----------------------------------------------------------------
 
-export function createReviewServer({ target, store, avatars }) {
+export function createReviewServer({ target, store }) {
   const targetHost = target.hostname;
   const targetPort = Number(target.port) || 80;
   const hostHeader = target.host; // e.g. localhost:3000
-  const avatarIds = new Set(avatars.map((a) => a.id));
   const hostName = gitUserName(store.cwd) || 'Host';
 
   async function api(req, res, url) {
@@ -163,19 +154,10 @@ export function createReviewServer({ target, store, avatars }) {
       return res.end(js);
     }
 
-    const av = p.match(/^\/__ft\/avatars\/([a-z0-9-]+)\.(png|webp|svg|jpe?g)$/);
-    if (req.method === 'GET' && av) {
-      const file = path.join(AVATAR_DIR, `${av[1]}.${av[2]}`);
-      if (!fs.existsSync(file)) return sendJson(res, 404, { error: 'not found' });
-      res.writeHead(200, { 'content-type': IMAGE_TYPES[av[2]], 'cache-control': 'max-age=3600' });
-      return fs.createReadStream(file).pipe(res);
-    }
-
     if (req.method === 'GET' && p === '/__ft/api/bootstrap') {
       return sendJson(res, 200, {
         isHost: isHost(req),
         project: path.basename(store.cwd),
-        avatars: loadAvatars(), // re-read so new images show up without a restart
       });
     }
 
@@ -195,13 +177,11 @@ export function createReviewServer({ target, store, avatars }) {
       }
       const text = str(b.text, 4000).trim();
       if (!text) return sendJson(res, 400, { error: 'Write something before posting.' });
-      const avatar = avatarIds.has(b.author?.avatar) ? b.author.avatar : avatars[0].id;
-      const animal = avatars.find((a) => a.id === avatar).name;
       const a = b.anchor || {};
       const ctx = b.context || {};
       const comment = store.add({
         text,
-        author: { name: str(b.author?.name, 40).trim() || `Anonymous ${animal}`, avatar, animal },
+        author: { name: str(b.author?.name, 40).trim() || 'Anonymous', color: color(b.author?.color) },
         page: { path: str(b.page?.path, 500) || '/', title: str(b.page?.title, 200) },
         anchor: {
           selector: str(a.selector, 1000),
@@ -236,7 +216,7 @@ export function createReviewServer({ target, store, avatars }) {
       }
       const status = b.status === 'resolved' ? 'resolved' : 'open';
       const given = str(b.by?.name, 40).trim();
-      const by = { name: given && given !== 'Host' ? given : hostName, avatar: avatarIds.has(b.by?.avatar) ? b.by.avatar : undefined };
+      const by = { name: given && given !== 'Host' ? given : hostName };
       const c = store.setStatus(Number(st[1]), status, by, 'browser');
       if (!c) return sendJson(res, 404, { error: 'No note with that number.' });
       return sendJson(res, 200, { version: store.version, comment: c });

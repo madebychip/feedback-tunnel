@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 
 const CHECKBOX = /^- \[([ xX])\] \*\*#(\d+)\*\*/gm;
 
-// Your first name from git, used when you resolve a note without picking an animal.
+// Your first name from git, used when you resolve a note before you've set your own name.
 export function gitUserName(cwd) {
   try {
     const n = execFileSync('git', ['config', 'user.name'], { cwd, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 });
@@ -197,8 +197,7 @@ function renderNote(c) {
   const lines = [];
   lines.push(`- [${box}] **#${c.id}** ${oneLine(a.label || a.tag || 'Element', 80)} on ${code(c.page?.path || '/')}`);
   const who = c.author?.name || 'Reviewer';
-  const animal = c.author?.animal && !who.includes(c.author.animal) ? ` (${c.author.animal})` : '';
-  lines.push(`  - Note from ${who}${animal}, ${when(c.createdAt)}:`);
+  lines.push(`  - Note from ${who}, ${when(c.createdAt)}:`);
   for (const l of String(c.text).split('\n')) lines.push(`    > ${l}`);
   if (a.selector) lines.push(`  - Selector: ${code(a.selector)}`);
   if (a.text) lines.push(`  - Element text: "${oneLine(a.text).replace(/"/g, "'")}"`);

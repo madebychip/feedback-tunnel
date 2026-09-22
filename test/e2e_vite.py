@@ -18,7 +18,7 @@ with sync_playwright() as p:
     r.on("pageerror", lambda e: errs.append(str(e)))
     r.on("websocket", lambda w: ws.append(w.url))
     r.goto(URL); r.wait_for_selector("feedback-tunnel", state="attached"); r.wait_for_selector("text=Choose Pair"); time.sleep(0.8)
-    r.evaluate("localStorage.setItem('feedback-tunnel:me', JSON.stringify({name:'Farah',avatar:'fox',custom:true}))")
+    r.evaluate("localStorage.setItem('feedback-tunnel:me', JSON.stringify({name:'Farah',color:'#f97316',custom:true}))")
     r.reload(); r.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(0.8)
     check("React app rendered through the proxy", r.get_by_text("Choose Pair").count() == 1)
     check("Vite HMR websocket goes through the proxy", any(URL.split("//")[1].rstrip("/") in u for u in ws), ws)
