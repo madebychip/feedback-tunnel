@@ -372,7 +372,7 @@ h2,h3,p{margin:0}
 .hl.inside .hl-label{bottom:auto;top:4px;left:4px;margin:0}
 
 .floating{position:absolute;inset:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.06)) drop-shadow(0 8px 20px rgba(0,0,0,.12))}
-.note{position:fixed;left:0;top:0;width:296px;padding:14px;background:color-mix(in srgb,var(--c) 6%,var(--background));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
+.note{position:fixed;left:0;top:0;width:296px;padding:14px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
 .note.shake{animation:shake .32s}
 @keyframes note-in{from{opacity:0;translate:0 4px}}
 @keyframes shake{25%{translate:-5px 0}75%{translate:5px 0}}
@@ -419,7 +419,7 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .bar.offline::after{content:"";width:8px;height:8px;border-radius:50%;background:#f9ab00;margin:0 10px 0 4px}
 @media (max-width:420px){.bar-btn .lbl{display:none}}
 
-.banner{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:5px 5px 5px 16px;border-radius:var(--radius-full);background:var(--me);color:var(--mi);font-weight:500;box-shadow:var(--shadow-popover);white-space:nowrap;animation:fade .2s}
+.banner{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:5px 5px 5px 16px;border-radius:var(--radius-full);background:var(--foreground);color:#fff;font-weight:500;box-shadow:var(--shadow-popover);white-space:nowrap;animation:fade .2s}
 .banner button{height:28px;padding:0 12px;border-radius:var(--radius-full);background:rgba(255,255,255,.24);font-weight:500}
 
 .panel{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;bottom:calc(70px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 24px));background:var(--background);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-popover);overflow:auto;overscroll-behavior:contain;padding:14px 8px 16px;animation:fade .15s}
@@ -437,7 +437,12 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .row-warn{font-size:11.5px;color:#b06000}
 .row-num{font-size:12px;font-weight:500;color:var(--sub);font-variant-numeric:tabular-nums;padding-top:1px}
 .toggle{display:flex;align-items:center;gap:8px;margin:12px 8px 4px;font-size:12.5px;color:var(--sub);cursor:pointer}
-.toggle input{accent-color:var(--green);margin:0}
+.switch-input{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
+.switch{position:relative;flex:none;width:30px;height:18px;border-radius:var(--radius-full);background:rgba(0,0,0,.16);transition:background .15s}
+.switch-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:translate .15s}
+.switch-input:checked + .switch{background:var(--green)}
+.switch-input:checked + .switch .switch-thumb{translate:12px 0}
+.switch-input:focus-visible + .switch{outline:2px solid var(--me);outline-offset:2px}
 .others{margin:16px 8px 0;border-top:1px solid var(--line);padding-top:12px}
 .others h3{font-size:12.5px;font-weight:600;color:var(--sub);margin-bottom:4px}
 .other{display:flex;justify-content:space-between;gap:12px;padding:6px 0;color:var(--me);text-decoration:none}
@@ -875,9 +880,10 @@ label.lab .field{margin-top:6px}
       open.map(row),
       done.length ? h('label', { class: 'toggle' },
         h('input', {
-          type: 'checkbox', checked: S.showResolved,
+          type: 'checkbox', class: 'switch-input', checked: S.showResolved,
           onchange: (e) => { S.showResolved = e.target.checked; syncPins(); renderPanel(); },
         }),
+        h('span', { class: 'switch' }, h('span', { class: 'switch-thumb' })),
         `Show ${done.length} resolved`) : null,
       S.showResolved ? done.map(row) : null,
       others.size ? h('div', { class: 'others' },
