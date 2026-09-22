@@ -346,6 +346,7 @@
 button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--me);outline-offset:2px}
 .field:focus-visible{outline:none}
+.compose:focus-visible{outline:none}
 h2,h3,p{margin:0}
 .av{display:inline-grid;place-items:center;flex:none;border-radius:50%;background:var(--c);color:var(--ci);font-weight:600;line-height:1;overflow:hidden;user-select:none}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
@@ -389,7 +390,6 @@ h2,h3,p{margin:0}
 .icon-btn{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;color:var(--sub);flex:none}
 .icon-btn svg{width:14px;height:14px}
 .icon-btn:hover{background:var(--hover)}
-.icon-btn.resolved{background:var(--green);color:#fff}
 .x{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;color:var(--sub);flex:none}
 .x:hover{background:var(--hover)}
 .x svg{width:13px;height:13px}
@@ -397,7 +397,8 @@ h2,h3,p{margin:0}
 .tag{font-size:9px;padding:3px 6px;border-radius:4px;background:var(--secondary);color:var(--sub);flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .body{margin:8px 0 0 24px;font-size:12px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
 .gone{margin:6px 0 0 24px;font-size:12px;color:#b06000}
-.status{margin:8px 0 0 24px;display:flex;align-items:center;gap:7px;color:var(--green);font-weight:500;font-size:12.5px}
+.status{margin:8px 0 0 24px;display:flex;align-items:center;gap:7px;color:var(--green);font-weight:500;font-size:10px}
+.status.btn-like:hover .dot{background:color-mix(in srgb,var(--green) 80%,#000)}
 .status .dot,.ok{flex:none;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center}
 .status .dot svg,.ok svg{width:11px;height:11px}
 .actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:12px}
@@ -824,18 +825,25 @@ label.lab .field{margin-top:6px}
     const byName = c.resolvedBy?.name && c.resolvedBy.name !== 'FEEDBACK.md' ? ` by ${c.resolvedBy.name}` : '';
     // comment-published: the pin outside this card already shows "#N" and, once
     // resolved, flips to a green check - repeating either inside the card is
-    // redundant. One icon button here does both jobs (resolve / reopen), so there's
-    // no separate bottom action row. "On <element>" and its width both describe the
-    // same target, so they're one line, not split across the header and the body.
+    // redundant. Resolving happens from the header icon; once resolved, that
+    // icon goes away too (three green checkmarks - pin, header, footer - was
+    // one too many) and the "Resolved by X" line itself becomes the reopen
+    // control instead. "On <element>" and its width both describe the same
+    // target, so they're one line, not split across the header and the body.
     // Everything below the header lines up under the name, not under the avatar.
+    const status = resolved
+      ? (S.isHost
+        ? h('button', { class: 'status btn-like', 'aria-label': 'Reopen note', onclick: () => setStatus(c, 'open') },
+          h('span', { class: 'dot', html: I.check }), `Resolved${byName}`)
+        : h('p', { class: 'status' }, h('span', { class: 'dot', html: I.check }), `Resolved${byName}`))
+      : null;
     return h('div', { class: 'note ui', style: `--c:${c.author.color};--ci:${ink(c.author.color)}`, role: 'dialog', 'aria-label': `Note ${c.id}` },
       h('div', { class: 'note-head' },
         avatar(c.author, 16),
         h('div', { class: 'who' }, h('strong', {}, c.author.name), h('span', { class: 'meta' }, timeAgo(c.createdAt))),
-        S.isHost ? h('button', {
-          class: 'icon-btn' + (resolved ? ' resolved' : ''),
-          'aria-label': resolved ? 'Reopen note' : 'Resolve note', html: I.resolve,
-          onclick: () => setStatus(c, resolved ? 'open' : 'resolved'),
+        S.isHost && !resolved ? h('button', {
+          class: 'icon-btn', 'aria-label': 'Resolve note', html: I.resolve,
+          onclick: () => setStatus(c, 'resolved'),
         }) : null,
         h('button', { class: 'x', 'aria-label': 'Close note', html: I.close, onclick: closeNote })),
       h('p', { class: 'on' },
@@ -843,7 +851,7 @@ label.lab .field{margin-top:6px}
         w ? h('span', {}, `${w}px wide`) : null),
       h('p', { class: 'body' }, c.text),
       pins.get(c.id)?.orphan ? h('p', { class: 'gone' }, "This element isn't on the page anymore.") : null,
-      resolved ? h('p', { class: 'status' }, h('span', { class: 'dot', html: I.check }), `Resolved${byName}`) : null);
+      status);
   }
 
   function closeNote() {
