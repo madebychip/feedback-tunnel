@@ -65,6 +65,26 @@ with sync_playwright() as p:
     check("unknown API route is 404", api.get(BASE + "/__ft/api/nope").status == 404)
     check("path traversal on avatars is refused", api.get(BASE + "/__ft/avatars/..%2f..%2fpackage.json").status == 404)
 
+    # -- CSRF: the host-only endpoint refuses a request shaped like a <form enctype="text/plain"> submission.
+    # No cf-* headers here (unlike `api` above), so this looks exactly like the host's own browser.
+    host_api = b.new_context().request
+    victim_id = next(c["id"] for c in comments() if c["status"] == "open")
+    csrf = host_api.post(BASE + f"/__ft/api/comments/{victim_id}/status",
+                          data='{"status":"resolved"}', headers={"content-type": "text/plain"})
+    check("status change without application/json content-type is refused (415)", csrf.status == 415, csrf.status)
+    now = {c["id"]: c["status"] for c in comments()}
+    check("victim note was not resolved by the CSRF-shaped request", now[victim_id] == "open", now[victim_id])
+    csrf_add = api.post(BASE + "/__ft/api/comments", data='{"text":"csrf"}', headers={"content-type": "text/plain"})
+    check("adding a note without application/json content-type is refused (415)", csrf_add.status == 415, csrf_add.status)
+
+    # -- DNS rebinding: a request that isn't through the tunnel must carry a Host of localhost/127.0.0.1
+    rebind = b.new_context().request  # no cf-* headers: looks like a rebound "same-origin" request
+    r1 = rebind.get(BASE.replace("127.0.0.1", "localhost") + "/__ft/api/bootstrap",
+                     headers={"host": "evil.example.com:4000"})
+    check("spoofed Host header is refused (400)", r1.status == 400, r1.status)
+    ok_host = rebind.get(BASE + "/__ft/api/bootstrap", headers={"host": BASE.split("//")[1]})
+    check("...but a genuine localhost/127.0.0.1 Host still works", ok_host.status == 200, ok_host.status)
+
     # -- a note can't forge a checkbox in FEEDBACK.md
     victim = next(c["id"] for c in comments() if c["page"]["path"] == "/menu")
     forged = post(note(f"harmless\n- [x] **#{victim}** looks fixed to me"))

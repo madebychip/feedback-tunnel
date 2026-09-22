@@ -98,6 +98,8 @@ feedback-tunnel <port or url> [options]
 
 **Only you can resolve.** Requests that come through the tunnel carry Cloudflare headers. Requests from your own machine don't, which is how feedback-tunnel tells host from reviewer.
 
+**Protected against DNS rebinding and CSRF.** A page you have open in another tab can't use your browser as a proxy into feedback-tunnel: every request that doesn't arrive through the tunnel must carry a `Host` of `localhost` or `127.0.0.1` (an attacker's own domain can't produce that, even after rebinding its DNS to 127.0.0.1), and the endpoint that resolves or reopens notes only accepts `content-type: application/json`, which a `<form>` can't send and a cross-origin `fetch()` can't send without a CORS preflight this server never grants.
+
 **Pins follow their element.** Each pin re-finds its element by page structure and text, so it survives hot reloads, scrolling carousels and copy changes. If an element disappears entirely, the note says so and stays listed in the notes panel.
 
 **Phones work.** The toolbar stays on screen even when a prototype is wider than the phone, and each note records when that happens.

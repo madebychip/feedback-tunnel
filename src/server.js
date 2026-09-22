@@ -25,13 +25,49 @@ export function loadAvatars() {
 
 // ---- Helpers ----------------------------------------------------------------
 
-// Requests that came through the tunnel carry Cloudflare headers. Anything
-// else reaching 127.0.0.1 is you, on your own machine: the host.
-function isHost(req) {
+// Requests that came through the tunnel carry Cloudflare headers.
+function looksLikeTunnel(req) {
   const h = req.headers;
-  if (h['cf-connecting-ip'] || h['cf-ray'] || h['cf-visitor'] || h['x-forwarded-for']) return false;
+  return !!(h['cf-connecting-ip'] || h['cf-ray'] || h['cf-visitor'] || h['x-forwarded-for']);
+}
+
+// Anything reaching 127.0.0.1 without those headers is you, on your own machine.
+function isHost(req) {
+  if (looksLikeTunnel(req)) return false;
   const addr = req.socket.remoteAddress || '';
   return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
+// DNS rebinding: a page you have open in your own browser gets an attacker
+// to repoint its domain's DNS at 127.0.0.1 after the page loads. The browser
+// treats that fetch as same-origin (no CORS, no preflight, any header goes),
+// so it can otherwise reach this server exactly as you would - including
+// setting a fake cf-connecting-ip to pass as a reviewer, or none at all to
+// pass as the host. The one thing the attacker's domain can't produce is a
+// Host header of "localhost" or "127.0.0.1": the browser sets Host from the
+// URL it actually fetched, which is still their domain. So outside the
+// tunnel, only those two are allowed; everything else is refused before it
+// reaches routing, host detection, or the dev server.
+function hostHeaderOk(req) {
+  if (looksLikeTunnel(req)) return true; // Host is the public *.trycloudflare.com name; that's expected
+  let hostname;
+  try {
+    hostname = new URL('http://' + (req.headers.host || '')).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+}
+
+// CSRF on the host-only endpoint: a page you have open could still submit a
+// same-origin-looking POST with Content-Type: text/plain (no preflight) and a
+// body crafted to parse as JSON. Cross-origin fetch() can set an explicit
+// application/json header, but that forces a real CORS preflight, which this
+// server never approves, so the browser blocks the request before it's sent.
+// A plain <form> can't set this header at all. Requiring it exactly rules
+// out both.
+function isJsonRequest(req) {
+  return /^application\/json\b/i.test(req.headers['content-type'] || '');
 }
 
 function sendJson(res, status, body) {
@@ -150,6 +186,7 @@ export function createReviewServer({ target, store, avatars }) {
     }
 
     if (req.method === 'POST' && p === '/__ft/api/comments') {
+      if (!isJsonRequest(req)) return sendJson(res, 415, { error: 'Expected content-type: application/json.' });
       let b;
       try {
         b = await readJson(req);
@@ -190,6 +227,7 @@ export function createReviewServer({ target, store, avatars }) {
     const st = p.match(/^\/__ft\/api\/comments\/(\d+)\/status$/);
     if (req.method === 'POST' && st) {
       if (!isHost(req)) return sendJson(res, 403, { error: 'Only the host can resolve notes.' });
+      if (!isJsonRequest(req)) return sendJson(res, 415, { error: 'Expected content-type: application/json.' });
       let b;
       try {
         b = await readJson(req);
@@ -270,6 +308,10 @@ export function createReviewServer({ target, store, avatars }) {
   }
 
   const server = http.createServer((req, res) => {
+    if (!hostHeaderOk(req)) {
+      res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+      return res.end('Bad Host header.');
+    }
     const url = new URL(req.url, 'http://x');
     if (url.pathname.startsWith(PREFIX)) {
       api(req, res, url).catch(() => sendJson(res, 500, { error: 'Something broke in feedback-tunnel.' }));
@@ -280,7 +322,7 @@ export function createReviewServer({ target, store, avatars }) {
 
   // WebSockets (hot reload) pass straight through with the same header rewrite.
   server.on('upgrade', (req, socket, head) => {
-    if (req.url.startsWith(PREFIX)) return socket.destroy();
+    if (!hostHeaderOk(req) || req.url.startsWith(PREFIX)) return socket.destroy();
     const upstream = net.connect(targetPort, targetHost, () => {
       const lines = [`${req.method} ${req.url} HTTP/${req.httpVersion}`];
       for (let i = 0; i < req.rawHeaders.length; i += 2) {
