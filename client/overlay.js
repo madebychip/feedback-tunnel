@@ -381,7 +381,7 @@ h2,h3,p{margin:0}
 .floating{position:absolute;inset:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.06)) drop-shadow(0 8px 20px rgba(0,0,0,.12))}
 .note{position:fixed;left:0;top:0;width:296px;padding:12px;background:var(--background);border:1px solid rgba(0,0,0,.13);border-radius:var(--radius);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
 .note.shake{animation:shake .32s}
-.note.bubble{border-radius:12px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-end;gap:6px}
+.note.bubble{border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px}
 .note.bubble .compose{flex:1 1 0%;min-width:0}
 .note.bubble.wrap .compose{flex-basis:100%}
 @keyframes note-in{from{opacity:0;translate:0 4px}}
