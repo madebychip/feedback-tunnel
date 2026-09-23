@@ -8,6 +8,7 @@ import { gitUserName } from './store.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OVERLAY_FILE = path.join(ROOT, 'client', 'overlay.js');
+const WELCOME_TIP_FILE = path.join(ROOT, 'client', 'welcome-tip.svg');
 const PREFIX = '/__ft/';
 const TAG = '<script src="/__ft/overlay.js" defer data-feedback-tunnel></script>';
 
@@ -152,6 +153,14 @@ export function createReviewServer({ target, store }) {
       const js = fs.readFileSync(OVERLAY_FILE);
       res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
       return res.end(js);
+    }
+
+    // Bundled with the tool, not user-replaceable like the old avatar images were -
+    // safe to cache for a while rather than re-fetching on every page load.
+    if (req.method === 'GET' && p === '/__ft/welcome-tip.svg') {
+      const svg = fs.readFileSync(WELCOME_TIP_FILE);
+      res.writeHead(200, { 'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': 'max-age=86400' });
+      return res.end(svg);
     }
 
     if (req.method === 'GET' && p === '/__ft/api/bootstrap') {

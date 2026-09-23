@@ -6,6 +6,7 @@
   window.__feedbackTunnel = true;
 
   const API = '/__ft/api';
+  const WELCOME_TIP = '/__ft/welcome-tip.svg';
   const KEY_ME = 'feedback-tunnel:me';
   const KEY_SEEN = 'feedback-tunnel:seen';
   const PIN = 32;
@@ -462,7 +463,9 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .other:hover span:first-child{text-decoration:underline}
 
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:fade .15s}
-.card{width:min(420px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--background);border-radius:var(--radius);padding:22px 22px 18px;box-shadow:var(--shadow-popover);animation:rise .24s cubic-bezier(.2,.9,.3,1.1)}
+.card{width:min(420px,100%);max-height:calc(100vh - 32px);background:var(--background);border-radius:var(--radius);box-shadow:var(--shadow-popover);overflow:hidden;display:flex;flex-direction:column;animation:rise .24s cubic-bezier(.2,.9,.3,1.1)}
+.card-hero{display:block;width:100%;height:auto;flex:none}
+.card-body{padding:22px 22px 18px;overflow:auto}
 .card h2{font-size:26px;font-weight:700;letter-spacing:-.01em;text-align:center}
 .sub{margin-top:4px;color:var(--sub);font-size:13px;text-align:center}
 .sub.caption{font-size:11px;margin-top:8px}
@@ -597,17 +600,21 @@ label.lab .field{margin-top:6px}
       if (then) then();
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+    // The hero illustration only makes sense on the first-time welcome screen -
+    // editing your name later is a small utility action, not worth repeating it for.
     card.append(...[
-      h('h2', {}, firstTime ? 'What are you looking at?' : 'Your name'),
-      firstTime
-        ? h('p', { class: 'sub' },
-          'This is a working prototype, not the final build. Click Comment, then click a button, a photo, or a line of text to leave a note right on it.')
-        : null,
-      h('div', { class: 'id-row' }, preview, h('label', { class: 'lab' }, 'Your name', input)),
-      firstTime ? h('p', { class: 'sub caption' }, 'Shown on your notes. Leave it blank to stay anonymous.') : null,
-      h('div', { class: 'actions' },
-        S.me ? h('button', { class: 'btn ghost', onclick: closeModal }, 'Cancel') : null,
-        h('button', { class: firstTime ? 'btn cta' : 'btn primary', onclick: save }, firstTime ? 'Start commenting' : 'Save')),
+      firstTime ? h('img', { class: 'card-hero', src: WELCOME_TIP, alt: '', draggable: 'false' }) : null,
+      h('div', { class: 'card-body' },
+        h('h2', {}, firstTime ? 'What are you looking at?' : 'Your name'),
+        firstTime
+          ? h('p', { class: 'sub' },
+            'This is a working prototype, not the final build. Click Comment, then click a button, a photo, or a line of text to leave a note right on it.')
+          : null,
+        h('div', { class: 'id-row' }, preview, h('label', { class: 'lab' }, 'Your name', input)),
+        firstTime ? h('p', { class: 'sub caption' }, 'Shown on your notes. Leave it blank to stay anonymous.') : null,
+        h('div', { class: 'actions' },
+          S.me ? h('button', { class: 'btn ghost', onclick: closeModal }, 'Cancel') : null,
+          h('button', { class: firstTime ? 'btn cta' : 'btn primary', onclick: save }, firstTime ? 'Start commenting' : 'Save'))),
     ].filter(Boolean));
     ui.modal = h('div', { class: 'scrim ui', onclick: (e) => { if (e.target === ui.modal) closeModal(); } }, card);
     root.append(ui.modal);
