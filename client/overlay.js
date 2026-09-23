@@ -15,6 +15,7 @@
   const touch = matchMedia('(hover: none)').matches;
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   const smooth = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  const reduced = smooth === 'auto';
 
   const S = {
     isHost: false, me: null,
@@ -436,7 +437,8 @@ h2,h3,p{margin:0}
 kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;border-radius:4px;border:1px solid currentColor;opacity:.5;display:grid;place-items:center;line-height:1}
 .bar.offline::after{content:"";width:8px;height:8px;border-radius:50%;background:#f9ab00;margin-left:10px;align-self:center}
 
-.panel{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;bottom:calc(70px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 24px));background:var(--background);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-popover);overflow:auto;overscroll-behavior:contain;padding:14px 8px 16px;animation:fade .15s}
+.panel{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;bottom:calc(70px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 24px));background:var(--background);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-popover);overflow:auto;overscroll-behavior:contain;padding:14px 8px 16px;transform-origin:bottom right;animation:panel-in .2s cubic-bezier(.2,.9,.3,1.1)}
+.panel.closing{animation:panel-out .14s ease-in forwards}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:0 8px 6px}
 .panel h2{font-size:15px;font-weight:600}
 .host{margin:0 8px 8px;font-size:12px;color:var(--sub)}
@@ -484,6 +486,8 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .toast .btn.ghost{color:#fff;text-decoration:underline;text-underline-offset:2px;margin:-4px -4px 0 0}
 .toast .btn.ghost:hover{background:rgba(255,255,255,.12)}
 @keyframes fade{from{opacity:0}}
+@keyframes panel-in{from{opacity:0;transform:scale(.95) translateY(10px)}}
+@keyframes panel-out{to{opacity:0;transform:scale(.97) translateY(6px)}}
 @keyframes rise{from{opacity:0;translate:0 8px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 `;
@@ -606,7 +610,7 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
         h('h2', {}, firstTime ? 'Help us refine this prototype' : 'Your name'),
         firstTime
           ? h('p', { class: 'sub' },
-            'Click Comment and tap anywhere—on a button, photo, or text, to drop feedback right on it.')
+            'Click Comment and tap anywhere, on a button, photo, or text, to drop feedback right on it.')
           : null,
         h('div', { class: 'id-row' }, preview, input),
         h('div', { class: 'actions' },
@@ -894,10 +898,23 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
   // ---- Notes panel ----------------------------------------------------------
 
   function togglePanel() {
-    S.panel = !S.panel;
-    ui.panel.hidden = !S.panel;
-    ui.listBtn.setAttribute('aria-expanded', String(S.panel));
-    renderPanel();
+    const opening = !S.panel;
+    S.panel = opening;
+    ui.listBtn.setAttribute('aria-expanded', String(opening));
+    if (opening) {
+      ui.panel.classList.remove('closing');
+      ui.panel.hidden = false;
+      renderPanel();
+    } else if (reduced) {
+      ui.panel.hidden = true;
+    } else {
+      ui.panel.classList.add('closing');
+      ui.panel.addEventListener('animationend', () => {
+        if (S.panel) return; // reopened mid-close
+        ui.panel.hidden = true;
+        ui.panel.classList.remove('closing');
+      }, { once: true });
+    }
   }
 
   function row(c) {
