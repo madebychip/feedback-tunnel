@@ -398,13 +398,17 @@ h2,h3,p{margin:0}
 .x:hover{background:var(--hover)}
 .x svg{width:13px;height:13px}
 .on{margin:8px 0 0 24px;display:flex;align-items:center;gap:6px;font-size:9px;color:var(--sub)}
-.tag{font-size:9px;padding:3px 6px;border-radius:4px;background:var(--secondary);color:var(--sub);flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:9px;padding:3px 6px;border-radius:4px;background:var(--secondary);color:var(--sub);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dim{flex:none;white-space:nowrap}
 .body{margin:8px 0 0 24px;font-size:12px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
 .gone{margin:6px 0 0 24px;font-size:12px;color:#b06000}
 .status{margin:8px 0 0 24px;display:flex;align-items:center;gap:7px;color:var(--green);font-weight:500;font-size:10px}
 .status.btn-like:hover .dot{background:color-mix(in srgb,var(--green) 80%,#000)}
-.status .dot,.ok{flex:none;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center}
-.status .dot svg,.ok svg{width:11px;height:11px}
+.status .dot,.ok{flex:none;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center}
+.status .dot{width:16px;height:16px}
+.status .dot svg{width:10px;height:10px}
+.ok{width:18px;height:18px}
+.ok svg{width:11px;height:11px}
 .actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:12px}
 .btn{height:28px;padding:0 12px;border-radius:var(--radius-full);font-weight:500;font-size:13px;white-space:nowrap}
 .btn.primary{background:var(--c);color:var(--ci)}
@@ -861,8 +865,8 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
         }) : null,
         h('button', { class: 'x', 'aria-label': 'Close note', html: I.close, onclick: closeNote })),
       h('p', { class: 'on' },
-        h('span', { class: 'tag' }, `On ${c.anchor?.label || 'this element'}`),
-        w ? h('span', {}, `${w}px wide`) : null),
+        h('span', { class: 'tag', title: `On ${c.anchor?.label || 'this element'}` }, `On ${c.anchor?.label || 'this element'}`),
+        w ? h('span', { class: 'dim' }, `${w}px wide`) : null),
       h('p', { class: 'body' }, c.text),
       pins.get(c.id)?.orphan ? h('p', { class: 'gone' }, "This element isn't on the page anymore.") : null,
       status);
