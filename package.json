@@ -1,6 +1,6 @@
 {
   "name": "feedback-tunnel",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Share a localhost prototype with one link. Reviewers leave sticky notes on it; notes land in FEEDBACK.md for your coding agent.",
   "author": "Chip Dong Lim",
   "type": "module",
