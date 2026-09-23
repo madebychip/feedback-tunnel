@@ -455,7 +455,7 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .row-top{display:flex;gap:8px;align-items:baseline}
 .row-top strong{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row-text{color:var(--foreground);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.row.done .row-text{color:var(--sub)}
+.row.resolved .row-text{color:var(--sub)}
 .row-warn{font-size:11.5px;color:#b06000}
 .row-num{font-size:12px;font-weight:500;color:var(--sub);font-variant-numeric:tabular-nums;padding-top:1px}
 .toggle{display:flex;align-items:center;gap:8px;margin:12px 8px 4px;font-size:12.5px;color:var(--sub);cursor:pointer}
@@ -927,7 +927,7 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 
   function row(c) {
     const done = c.status === 'resolved';
-    return h('button', { class: 'row' + (done ? ' done' : ''), onclick: () => focusNote(c.id) },
+    return h('button', { class: 'row' + (done ? ' resolved' : ''), onclick: () => focusNote(c.id) },
       avatar(c.author, 26),
       h('span', { class: 'row-main' },
         h('span', { class: 'row-top' }, h('strong', {}, c.author.name), h('span', { class: 'meta' }, timeAgo(c.createdAt))),
