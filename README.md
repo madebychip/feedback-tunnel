@@ -2,7 +2,7 @@
 
 One command turns the prototype running on your laptop into a link anyone can leave sticky notes on. No account, no script to install, nothing to deploy. Notes land in `FEEDBACK.md` next to your code, where Claude Code or Cursor can pick them up. When a note gets fixed, the reviewer watches its pin turn green.
 
-![A resolved pin flipping green on the prototype](docs/green-pin.png)
+![A resolved note, with a fresh one just posted alongside it](docs/resolved-note.webp)
 
 ## Quick start
 
@@ -34,8 +34,9 @@ The link only appears once it works. Cloudflare prints a quick tunnel's address 
 
 **Your reviewer** opens the link and sees your prototype, working as normal. The first time they click **Comment** (or press C), a card explains what's going on and asks for a name — then they click anything to leave a sticky note. While commenting, clicks place notes instead of following links, so they can pin a button without leaving the page.
 
-![The welcome card, with a live colour preview](docs/welcome.png)
-![Writing a note on a button](docs/sticky-note.png)
+![The toolbar: Comment button at rest, and mid-commenting](docs/toolbar.webp)
+![The welcome card, shown the first time someone comments](docs/welcome.webp)
+![Writing a note, with the notes panel open alongside it](docs/composer.webp)
 
 **You** open `http://localhost:4000`. It's the same view, plus a **Resolve** button on every note. Notes also scroll past in your terminal as they arrive.
 
