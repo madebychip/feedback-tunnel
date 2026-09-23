@@ -93,9 +93,11 @@ with sync_playwright() as p:
     # force a read-back of the file by ticking something unrelated, as an agent would
     resolved_id = next(c["id"] for c in comments() if c["status"] == "resolved")
     edit_md(f"- [x] **#{resolved_id}**", f"- [ ] **#{resolved_id}**")
-    time.sleep(2.2)
+    # the server notices via a 700ms poll (fs.watchFile); poll for it instead of a
+    # fixed sleep so a loaded CI runner doesn't get caught mid-window.
+    status = lambda: next(c["status"] for c in comments() if c["id"] == resolved_id)
+    check("read-back reopened the ticked note", poll(lambda: status() == "open", timeout=8), status())
     now = {c["id"]: c["status"] for c in comments()}
-    check("read-back reopened the ticked note", now[resolved_id] == "open", now[resolved_id])
     check("victim note is unaffected by the forged line", now[victim] == "open", now[victim])
     check("no page errors", errs == [], errs)
     b.close()
