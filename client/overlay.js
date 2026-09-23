@@ -381,7 +381,9 @@ h2,h3,p{margin:0}
 .floating{position:absolute;inset:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.06)) drop-shadow(0 8px 20px rgba(0,0,0,.12))}
 .note{position:fixed;left:0;top:0;width:296px;padding:12px;background:var(--background);border:1px solid rgba(0,0,0,.13);border-radius:var(--radius);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
 .note.shake{animation:shake .32s}
-.note.bubble{border-radius:12px}
+.note.bubble{border-radius:12px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-end;gap:6px}
+.note.bubble .compose{flex:1 1 0%;min-width:0}
+.note.bubble.wrap .compose{flex-basis:100%}
 @keyframes note-in{from{opacity:0;translate:0 4px}}
 @keyframes shake{25%{translate:-5px 0}75%{translate:5px 0}}
 .note-head{display:flex;align-items:center;gap:8px}
@@ -414,7 +416,7 @@ h2,h3,p{margin:0}
 .field:focus{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 24%,transparent)}
 .compose{display:block;width:100%;font:inherit;font-size:12px;color:var(--foreground);background:transparent;border:0;outline:none;resize:none;line-height:16px;padding:0}
 .compose::placeholder{color:var(--muted-foreground)}
-.compose-send{position:absolute;right:9px;bottom:9px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.28);color:#fff;flex:none;transition:background .15s}
+.compose-send{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.28);color:#fff;flex:none;transition:background .15s}
 .compose-send svg{width:13px;height:13px}
 .compose-send.active{background:var(--c)}
 .note.sheet{left:12px;right:12px;width:auto;top:calc(60px + env(safe-area-inset-top));transform:none!important}
@@ -682,8 +684,10 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
     // The send button lights up (muted -> --c) once there's something to post.
     const grow = () => {
       text.style.height = 'auto';
-      text.style.height = `${Math.min(text.scrollHeight, COMPOSE_MAXH)}px`;
+      const sh = text.scrollHeight;
+      text.style.height = `${Math.min(sh, COMPOSE_MAXH)}px`;
       send.classList.toggle('active', !!text.value.trim());
+      card.classList.toggle('wrap', sh > 20); // past one line: send drops to its own row
     };
 
     async function submit() {
