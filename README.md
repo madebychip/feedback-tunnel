@@ -9,15 +9,14 @@ One command turns the prototype running on your laptop into a link anyone can le
 ```bash
 brew install cloudflared          # once. Windows: winget install Cloudflare.cloudflared
 
-git clone https://github.com/madebychip/feedback-tunnel.git ~/code/feedback-tunnel
-(cd ~/code/feedback-tunnel && npm link)   # once; gives you the `feedback-tunnel` command
-
 cd your-project                   # run it from your project root
 npm run dev                       # your prototype, say on port 3000
-feedback-tunnel 3000
+npx feedback-tunnel 3000
 ```
 
-After it's published to npm this becomes `npx feedback-tunnel 3000`.
+No install step, and nothing to clean up after: `npx` fetches it on first run and caches it for the next one. Prefer a permanent command instead of typing `npx` every time? `npm i -g feedback-tunnel`, then just `feedback-tunnel 3000`.
+
+Working on feedback-tunnel itself, not just using it? `git clone https://github.com/madebychip/feedback-tunnel.git && (cd feedback-tunnel && npm link)` gives you a `feedback-tunnel` command backed by your local checkout instead of the published package.
 
 ```
   feedback-tunnel v0.1
