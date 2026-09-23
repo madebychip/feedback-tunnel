@@ -463,16 +463,14 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 .other:hover span:first-child{text-decoration:underline}
 
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:fade .15s}
-.card{width:min(420px,100%);max-height:calc(100vh - 32px);background:var(--background);border-radius:var(--radius);box-shadow:var(--shadow-popover);overflow:hidden;display:flex;flex-direction:column;animation:rise .24s cubic-bezier(.2,.9,.3,1.1)}
+.card{width:min(600px,100%);max-height:calc(100vh - 32px);background:var(--background);border-radius:var(--radius);box-shadow:var(--shadow-popover);overflow:hidden;display:flex;flex-direction:column;animation:rise .24s cubic-bezier(.2,.9,.3,1.1)}
 .card-hero{display:block;width:100%;height:auto;flex:none}
-.card-body{padding:22px 22px 18px;overflow:auto}
+.card-body{padding:22px 120px 18px;overflow:auto}
+@media (max-width:640px){.card-body{padding:22px 22px 18px}}
 .card h2{font-size:26px;font-weight:700;letter-spacing:-.01em;text-align:center}
 .sub{margin-top:4px;color:var(--sub);font-size:13px;text-align:center}
-.sub.caption{font-size:11px;margin-top:8px}
-.lab{display:block;margin:18px 0 6px;font-size:12.5px;font-weight:600;color:var(--muted-foreground)}
-label.lab .field{margin-top:6px}
 .id-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px}
-.id-row .lab{margin:0;width:240px}
+.id-row .field{flex:1;max-width:240px}
 .card .actions{margin-top:18px}
 .btn.cta{width:100%;height:40px;background:var(--foreground);color:#fff}
 
@@ -581,13 +579,13 @@ label.lab .field{margin-top:6px}
     const color = S.me?.color || randomColor(); // picked once, then kept for the session
     const input = h('input', {
       class: 'field', type: 'text', maxlength: '40', autocomplete: 'name', 'aria-label': 'Your name',
-      value: S.me?.custom ? S.me.name : null, placeholder: 'Anonymous',
+      value: S.me?.custom ? S.me.name : null, placeholder: 'Your name',
     });
-    const preview = avatar({ name: input.value, color }, 42);
+    const preview = avatar({ name: input.value, color }, 36);
     input.addEventListener('input', () => { preview.textContent = initial(input.value); });
     const card = h('div', {
       class: 'card', role: 'dialog', 'aria-modal': 'true',
-      'aria-label': firstTime ? 'What are you looking at?' : 'Your name',
+      'aria-label': firstTime ? 'Help us refine this prototype' : 'Your name',
     });
     card.style.setProperty('--c', color);
     card.style.setProperty('--ci', ink(color));
@@ -605,13 +603,12 @@ label.lab .field{margin-top:6px}
     card.append(...[
       firstTime ? h('img', { class: 'card-hero', src: WELCOME_TIP, alt: '', draggable: 'false' }) : null,
       h('div', { class: 'card-body' },
-        h('h2', {}, firstTime ? 'What are you looking at?' : 'Your name'),
+        h('h2', {}, firstTime ? 'Help us refine this prototype' : 'Your name'),
         firstTime
           ? h('p', { class: 'sub' },
-            'This is a working prototype, not the final build. Click Comment, then click a button, a photo, or a line of text to leave a note right on it.')
+            'Click Comment and tap anywhere—on a button, photo, or text, to drop feedback right on it.')
           : null,
-        h('div', { class: 'id-row' }, preview, h('label', { class: 'lab' }, 'Your name', input)),
-        firstTime ? h('p', { class: 'sub caption' }, 'Shown on your notes. Leave it blank to stay anonymous.') : null,
+        h('div', { class: 'id-row' }, preview, input),
         h('div', { class: 'actions' },
           S.me ? h('button', { class: 'btn ghost', onclick: closeModal }, 'Cancel') : null,
           h('button', { class: firstTime ? 'btn cta' : 'btn primary', onclick: save }, firstTime ? 'Start commenting' : 'Save'))),
