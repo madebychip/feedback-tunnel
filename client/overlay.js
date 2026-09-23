@@ -379,7 +379,7 @@ h2,h3,p{margin:0}
 .floating{position:absolute;inset:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.06)) drop-shadow(0 8px 20px rgba(0,0,0,.12))}
 .note{position:fixed;left:0;top:0;width:296px;padding:12px;background:var(--background);border:1px solid rgba(0,0,0,.13);border-radius:var(--radius);animation:note-in .2s cubic-bezier(.2,.9,.3,1.1)}
 .note.shake{animation:shake .32s}
-.note.bubble{border-radius:12px;border-color:var(--c)}
+.note.bubble{border-radius:12px}
 @keyframes note-in{from{opacity:0;translate:0 4px}}
 @keyframes shake{25%{translate:-5px 0}75%{translate:5px 0}}
 .note-head{display:flex;align-items:center;gap:8px}
@@ -408,7 +408,7 @@ h2,h3,p{margin:0}
 .btn.ghost{color:var(--muted-foreground)}
 .btn.ghost:hover{background:var(--hover)}
 .btn.sm{height:24px;padding:0 10px;font-size:12px}
-.field{display:block;width:100%;font:inherit;font-size:14px;font-weight:400;color:var(--foreground);background:var(--background);border:1px solid rgba(0,0,0,.12);border-radius:var(--radius);padding:9px 11px;outline:none}
+.field{display:block;width:100%;height:42px;font:inherit;font-size:14px;font-weight:400;color:var(--foreground);background:var(--background);border:1px solid rgba(0,0,0,.12);border-radius:var(--radius);padding:0 11px;outline:none}
 .field:focus{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 24%,transparent)}
 .compose{display:block;width:100%;font:inherit;font-size:12px;color:var(--foreground);background:transparent;border:0;outline:none;resize:none;line-height:16px;padding:0}
 .compose::placeholder{color:var(--muted-foreground)}
@@ -463,13 +463,15 @@ kbd{font:inherit;font-size:10.5px;min-width:18px;height:18px;padding:0 4px;borde
 
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:fade .15s}
 .card{width:min(420px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--background);border-radius:var(--radius);padding:22px 22px 18px;box-shadow:var(--shadow-popover);animation:rise .24s cubic-bezier(.2,.9,.3,1.1)}
-.card h2{font-size:19px;font-weight:600;letter-spacing:-.01em}
-.sub{margin-top:4px;color:var(--sub);font-size:13px}
+.card h2{font-size:26px;font-weight:700;letter-spacing:-.01em;text-align:center}
+.sub{margin-top:4px;color:var(--sub);font-size:13px;text-align:center}
+.sub.caption{font-size:11px;margin-top:8px}
 .lab{display:block;margin:18px 0 6px;font-size:12.5px;font-weight:600;color:var(--muted-foreground)}
 label.lab .field{margin-top:6px}
-.id-row{display:flex;align-items:flex-start;gap:14px;margin-top:18px}
-.id-row .lab{margin:0;flex:1}
+.id-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px}
+.id-row .lab{margin:0;width:240px}
 .card .actions{margin-top:18px}
+.btn.cta{width:100%;height:40px;background:var(--foreground);color:#fff}
 
 .toasts{position:fixed;right:16px;bottom:calc(70px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;align-items:flex-end;width:min(340px,calc(100vw - 32px))}
 .toast{display:flex;align-items:flex-start;gap:10px;width:100%;background:var(--foreground);color:#fff;border-radius:var(--radius);padding:11px 12px;box-shadow:var(--shadow-popover);animation:rise .26s cubic-bezier(.2,.9,.3,1.1);transition:opacity .35s,translate .35s}
@@ -578,7 +580,7 @@ label.lab .field{margin-top:6px}
       class: 'field', type: 'text', maxlength: '40', autocomplete: 'name', 'aria-label': 'Your name',
       value: S.me?.custom ? S.me.name : null, placeholder: 'Anonymous',
     });
-    const preview = avatar({ name: input.value, color }, 52);
+    const preview = avatar({ name: input.value, color }, 42);
     input.addEventListener('input', () => { preview.textContent = initial(input.value); });
     const card = h('div', {
       class: 'card', role: 'dialog', 'aria-modal': 'true',
@@ -602,10 +604,10 @@ label.lab .field{margin-top:6px}
           'This is a working prototype, not the final build. Click Comment, then click a button, a photo, or a line of text to leave a note right on it.')
         : null,
       h('div', { class: 'id-row' }, preview, h('label', { class: 'lab' }, 'Your name', input)),
-      firstTime ? h('p', { class: 'sub' }, 'Shown on your notes. Leave it blank to stay anonymous.') : null,
+      firstTime ? h('p', { class: 'sub caption' }, 'Shown on your notes. Leave it blank to stay anonymous.') : null,
       h('div', { class: 'actions' },
         S.me ? h('button', { class: 'btn ghost', onclick: closeModal }, 'Cancel') : null,
-        h('button', { class: 'btn primary', onclick: save }, firstTime ? 'Start commenting' : 'Save')),
+        h('button', { class: firstTime ? 'btn cta' : 'btn primary', onclick: save }, firstTime ? 'Start commenting' : 'Save')),
     ].filter(Boolean));
     ui.modal = h('div', { class: 'scrim ui', onclick: (e) => { if (e.target === ui.modal) closeModal(); } }, card);
     root.append(ui.modal);
