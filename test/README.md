@@ -23,10 +23,10 @@ Screenshots from every run land in `test/.work/shots/`. A suite whose dependenci
 
 | Suite | Target | What it proves |
 |---|---|---|
-| `kopi` | `testsite/`: gzipped page, strict CSP, snap carousel, `alert()` CTA | Injection, host vs reviewer, Comment mode swallowing clicks, pins on carousel cards, the green-pin moment (host click and agent tick), reload, clipped carousels, phone layout, other-page notes, orphans, hostile input, the `FEEDBACK.md` format |
+| `kopi` | `testsite/`: gzipped page, strict CSP, snap carousel, `alert()` CTA | Injection, host vs reviewer, Comment mode swallowing clicks, pins on carousel cards, the resolve moment (host click and agent tick), resolved pins leaving the page and returning on the Resolved tab, reload, clipped carousels, phone layout, other-page notes, orphans, hostile input, the `FEEDBACK.md` format, adaptive polling |
 | `vite` | `viteapp/`: React 19 + Vite | HMR websocket through the proxy, React component names, hot update without reload, pin stays put |
 | `next` | `nextapp/`: Next.js App Router | Hydration, a server action through the proxy, the overlay surviving a hot update |
-| `tunnel` | `viteapp/` behind a real `cloudflared` quick tunnel | The link only appears once its DNS resolves, the URL scrape against real `cloudflared` output, host vs reviewer from genuine Cloudflare headers (403 on a reviewer's resolve), the HMR websocket over `wss://`, hot update and green pin through the tunnel, and a probe of the 200-in-flight cap (`FT_CAP_PROBE=0` skips it) |
+| `tunnel` | `viteapp/` behind a real `cloudflared` quick tunnel | The link only appears once its DNS resolves, the URL scrape against real `cloudflared` output, host vs reviewer from genuine Cloudflare headers (403 on a reviewer's resolve), the HMR websocket over `wss://`, hot update and resolved pin through the tunnel, and a probe of the 200-in-flight cap (`FT_CAP_PROBE=0` skips it) |
 
 `kopi` runs `e2e.py`, `e2e2.py` and `e2e3.py` in that order because they share one notes file, the way a real review session does.
 

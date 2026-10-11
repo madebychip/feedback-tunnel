@@ -1,5 +1,5 @@
 """Reviewer flow against the gzipped, CSP-protected Kopi Club page:
-inject, comment mode, pins, carousel, host resolve, the green-pin moment."""
+inject, comment mode, pins, carousel, host resolve, the resolve moment."""
 import re
 import time
 from playwright.sync_api import sync_playwright
@@ -47,7 +47,7 @@ with sync_playwright() as p:
     cb = r.locator(".card", has_text="Bali Kintamani").bounding_box()
     r.mouse.click(cb["x"] + cb["width"] * 0.5, cb["y"] + 30); time.sleep(0.3)
     ft.locator("textarea").fill("The snap on this carousel feels abrupt on trackpad.")
-    ft.get_by_role("button", name="Post note").click()
+    ft.get_by_role("button", name="Post comment").click()
     check("note 2 appears", poll(lambda: "2:open" in r.evaluate(PINS)), r.evaluate(PINS))
     r.keyboard.press("Escape"); time.sleep(0.2)
     shot(r, "06_carousel_pin.png")
@@ -78,13 +78,14 @@ with sync_playwright() as p:
     mount(hp)
     hp.locator("feedback-tunnel").locator(".pin", has=hp.locator(".num", has_text="1")).click(); time.sleep(0.4)
     shot(hp, "07_host_note.png")
-    hp.locator("feedback-tunnel").get_by_role("button", name="Resolve note").click(); time.sleep(0.5)
+    hp.locator("feedback-tunnel").get_by_role("button", name="Resolve comment").click(); time.sleep(0.5)
     shot(hp, "08_host_resolved.png")
 
-    # -- the reviewer watches it turn green (poll interval is 2 s)
-    check("reviewer sees the green pin", poll(lambda: any(":green" in s for s in r.evaluate(PINS)), timeout=6), r.evaluate(PINS))
+    # -- the reviewer watches it resolve (poll interval is 2 s)
+    check("reviewer sees the pin resolve", poll(lambda: any(":green" in s for s in r.evaluate(PINS)), timeout=6), r.evaluate(PINS))
     shot(r, "09_reviewer_celebrate.png")
-    check("reviewer toast names the host", poll(lambda: "Chip resolved note 1" in r.evaluate(TOASTS)), r.evaluate(TOASTS))
+    check("...then the resolved pin leaves the page", poll(lambda: not any(s.startswith("1:") for s in r.evaluate(PINS)), timeout=4), r.evaluate(PINS))
+    check("reviewer toast names the host", poll(lambda: "Chip resolved comment 1" in r.evaluate(TOASTS)), r.evaluate(TOASTS))
     time.sleep(1.8); shot(r, "10_reviewer_after.png")
 
     # -- reviewers cannot resolve

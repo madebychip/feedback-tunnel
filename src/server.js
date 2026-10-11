@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { spawn } from 'node:child_process';
 import net from 'node:net';
 import zlib from 'node:zlib';
 import fs from 'node:fs';
@@ -8,11 +9,37 @@ import { gitUserName } from './store.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OVERLAY_FILE = path.join(ROOT, 'client', 'overlay.js');
-const WELCOME_TIP_FILE = path.join(ROOT, 'client', 'welcome-tip.svg');
 const PREFIX = '/__ft/';
 const TAG = '<script src="/__ft/overlay.js" defer data-feedback-tunnel></script>';
 
 // ---- Helpers ----------------------------------------------------------------
+
+// Opens a file in the OS's default app for it. No shell, so the path is never parsed as a command.
+function openFile(file) {
+  const [cmd, args] = process.platform === 'darwin' ? ['open', [file]]
+    : process.platform === 'win32' ? ['explorer.exe', [file]]
+    : ['xdg-open', [file]];
+  const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
+  child.on('error', () => {});
+  child.unref();
+}
+
+// The overlay, compressed once and cached until the file changes. Reviewers on a
+// phone over the tunnel get ~18 KB instead of ~74 KB, and a reload is a 304.
+let overlayCache = null;
+function overlayAsset() {
+  const mtime = fs.statSync(OVERLAY_FILE).mtimeMs;
+  if (overlayCache?.mtime === mtime) return overlayCache;
+  const raw = fs.readFileSync(OVERLAY_FILE);
+  overlayCache = {
+    mtime,
+    raw,
+    etag: `"${mtime.toString(36)}-${raw.length.toString(36)}"`,
+    gzip: zlib.gzipSync(raw, { level: 9 }),
+    br: zlib.brotliCompressSync(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11 } }),
+  };
+  return overlayCache;
+}
 
 // Requests that came through the tunnel carry Cloudflare headers.
 function looksLikeTunnel(req) {
@@ -150,23 +177,23 @@ export function createReviewServer({ target, store }) {
     const p = url.pathname;
 
     if (req.method === 'GET' && p === '/__ft/overlay.js') {
-      const js = fs.readFileSync(OVERLAY_FILE);
-      res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
-      return res.end(js);
-    }
-
-    // Bundled with the tool, not user-replaceable like the old avatar images were -
-    // safe to cache for a while rather than re-fetching on every page load.
-    if (req.method === 'GET' && p === '/__ft/welcome-tip.svg') {
-      const svg = fs.readFileSync(WELCOME_TIP_FILE);
-      res.writeHead(200, { 'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': 'max-age=86400' });
-      return res.end(svg);
+      const o = overlayAsset();
+      const headers = { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache', etag: o.etag, vary: 'accept-encoding' };
+      if (req.headers['if-none-match'] === o.etag) { res.writeHead(304, headers); return res.end(); }
+      const accept = String(req.headers['accept-encoding'] || '');
+      const enc = /\bbr\b/.test(accept) ? 'br' : /\bgzip\b/.test(accept) ? 'gzip' : null;
+      if (enc) headers['content-encoding'] = enc;
+      res.writeHead(200, headers);
+      return res.end(enc ? o[enc] : o.raw);
     }
 
     if (req.method === 'GET' && p === '/__ft/api/bootstrap') {
+      const host = isHost(req);
       return sendJson(res, 200, {
-        isHost: isHost(req),
+        isHost: host,
         project: path.basename(store.cwd),
+        // Where comments are saved. Host only: it's a path on the host's laptop.
+        feedbackFile: host ? path.relative(store.cwd, store.outFile) || path.basename(store.outFile) : undefined,
       });
     }
 
@@ -229,6 +256,22 @@ export function createReviewServer({ target, store }) {
       const c = store.setStatus(Number(st[1]), status, by, 'browser');
       if (!c) return sendJson(res, 404, { error: 'No note with that number.' });
       return sendJson(res, 200, { version: store.version, comment: c });
+    }
+
+    // One click from the host's panel opens FEEDBACK.md in their default app.
+    // Host only, JSON only (no drive-by form posts), and it can only ever open
+    // that one file: nothing in the request picks what gets opened.
+    if (req.method === 'POST' && p === '/__ft/api/open-feedback') {
+      if (!isHost(req)) return sendJson(res, 403, { error: 'Only the host can open the feedback file.' });
+      if (!isJsonRequest(req)) return sendJson(res, 415, { error: 'Expected content-type: application/json.' });
+      if (!fs.existsSync(store.outFile)) store.writeMarkdown();
+      if (process.env.FEEDBACK_TUNNEL_NO_OPEN) return sendJson(res, 200, { ok: true, opened: false });
+      try {
+        openFile(store.outFile);
+        return sendJson(res, 200, { ok: true, opened: true });
+      } catch {
+        return sendJson(res, 500, { error: `Couldn't open ${path.basename(store.outFile)}. It's in your project folder.` });
+      }
     }
 
     return sendJson(res, 404, { error: 'not found' });

@@ -38,8 +38,21 @@ with sync_playwright() as p:
     h.locator("feedback-tunnel").locator(".bar-btn").nth(1).click(); time.sleep(0.4)
     panel = h.locator("feedback-tunnel").locator(".panel")
     check("panel lists open notes from other pages", poll(lambda: "/menu" in panel.inner_text()), panel.inner_text()[:200])
-    check("panel warns about the orphaned note", poll(lambda: "Can't find this element" in panel.inner_text(), timeout=5))
+    check("panel flags the orphaned note", poll(lambda: "Element no longer on page" in panel.inner_text(), timeout=5))
     shot(h, "17_host_panel.png")
+
+    # -- where comments go: host only
+    tip = h.locator("feedback-tunnel").locator(".filetip")
+    check("host panel says where comments are saved", poll(lambda: tip.count() == 1 and "Comments are saved to FEEDBACK.md" in tip.inner_text()))
+    check("host gets a one-time toast about FEEDBACK.md", any("saved to FEEDBACK.md" in t for t in h.evaluate(TOASTS)), h.evaluate(TOASTS))
+    opened = h.evaluate("""async () => (await fetch('/__ft/api/open-feedback', {method: 'POST', headers: {'content-type': 'application/json'}, body: '{}'})).status""")
+    check("host can open FEEDBACK.md in one click", opened == 200, opened)
+    check("reviewers are not told where the file lives", "feedbackFile" not in api.get(BASE + "/__ft/api/bootstrap").json())
+    check("reviewers cannot open the file", api.post(BASE + "/__ft/api/open-feedback", data="{}", headers=JSON).status == 403)
+    tip.get_by_role("button", name="Dismiss").click(); time.sleep(0.3)
+    h.reload(); h.wait_for_selector("feedback-tunnel", state="attached"); time.sleep(1.2)
+    h.locator("feedback-tunnel").locator(".bar-btn").nth(1).click(); time.sleep(0.4)
+    check("dismissing the hint sticks", tip.count() == 0 and not any("saved to FEEDBACK.md" in t for t in h.evaluate(TOASTS)))
 
     # -- hostile input
     xss = post(note('<img src=x onerror="window.__pwned=1"> <b>bold</b>', anchor={"selector": "main", "tag": "main", "label": "<i>label</i>", "offset": {"x": .5, "y": .5}}))
@@ -99,6 +112,21 @@ with sync_playwright() as p:
     check("read-back reopened the ticked note", poll(lambda: status() == "open", timeout=8), status())
     now = {c["id"]: c["status"] for c in comments()}
     check("victim note is unaffected by the forged line", now[victim] == "open", now[victim])
+    # -- adaptive polling: 2 s while reviewing, easing to 10 s after a minute idle, snapping back on input
+    pc = b.new_context(viewport={"width": 1280, "height": 800}).new_page()
+    pc.clock.install()
+    hits = []
+    pc.on("request", lambda r: "/__ft/api/comments?since" in r.url and hits.append(1))
+    pc.goto(URL); pc.clock.run_for(2000); pc.wait_for_selector("feedback-tunnel", state="attached")
+    def polls(ms):
+        n = len(hits); pc.clock.run_for(ms); pc.wait_for_timeout(50); return len(hits) - n
+    active, easing, idle = polls(60000), polls(60000), polls(60000)
+    check("polls every 2 s while active", 28 <= active <= 31, active)
+    check("eases off after a minute without interaction", 8 <= easing <= 16 and 5 <= idle <= 7, (easing, idle))
+    n = len(hits); pc.mouse.move(400, 300); pc.wait_for_timeout(100)
+    check("any interaction polls at once and goes back to 2 s", len(hits) - n == 1 and 28 <= polls(60000) <= 31)
+    pc.close()
+
     check("no page errors", errs == [], errs)
     b.close()
 finish()

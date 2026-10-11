@@ -1,7 +1,9 @@
+import fs from 'node:fs';
 import { Store } from './store.js';
 import { createReviewServer } from './server.js';
 import { startTunnel } from './tunnel.js';
 
+const VERSION = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const tty = process.stdout.isTTY;
 const c = (code) => (s) => (tty ? `\x1b[${code}m${s}\x1b[0m` : String(s));
 const bold = c(1);
@@ -16,6 +18,7 @@ function short(s, n = 70) {
 }
 
 export async function start({ target, port, tunnel, out, cwd }) {
+  let tipped = false;
   const store = new Store({
     cwd,
     outFile: out,
@@ -24,6 +27,12 @@ export async function start({ target, port, tunnel, out, cwd }) {
       if (e.type === 'added') {
         console.log(`\n  ${yellow('●')} ${bold('#' + n.id)}  ${n.author.name} on ${cyan(n.page.path)}  ${dim(short(n.anchor.label, 40))}`);
         console.log(`     ${short(n.text)}`);
+        if (!tipped) {
+          // Once per session: the next step people tend to miss.
+          tipped = true;
+          const file = store.outFile.replace(cwd + '/', '');
+          console.log(`\n  ${dim('Tip: ask your coding agent to')} "work through ${file}"`);
+        }
       } else if (e.type === 'resolved') {
         const who = e.via === 'FEEDBACK.md' ? 'ticked in FEEDBACK.md' : 'by ' + (n.resolvedBy?.name || 'host');
         console.log(`\n  ${green('✓')} ${bold('#' + n.id)} resolved ${dim(who)}`);
@@ -43,7 +52,7 @@ export async function start({ target, port, tunnel, out, cwd }) {
   const local = `http://localhost:${port}`;
   const row = (label, value) => console.log(`  ${dim(label.padEnd(14))}${value}`);
 
-  console.log(`\n  ${bold('feedback-tunnel')} ${dim('v0.1')}\n`);
+  console.log(`\n  ${bold('feedback-tunnel')} ${dim('v' + VERSION)}\n`);
   row('Prototype', target.origin);
   row('Your view', `${local}  ${dim('(you can resolve notes here)')}`);
   row('Notes file', store.outFile.replace(cwd + '/', './'));

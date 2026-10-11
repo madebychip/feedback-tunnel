@@ -2,9 +2,9 @@
 
 **The problem:** getting feedback on a work-in-progress site usually means screen-sharing, screenshots with arrows, or a long back-and-forth in Slack. Then someone still has to translate all of that into an actual code fix.
 
-**What this does:** turns whatever you have running on your laptop into a link. Anyone you send it to can click directly on the thing they're talking about and leave a note. No account, no app to install. Their notes land in a file your AI coding assistant (Claude Code, Cursor, etc.) can read and act on. When it fixes something, the person who asked sees it flip to "done" right on the page.
+**What this does:** turns whatever you have running on your laptop into a link. Anyone you send it to can click directly on the thing they're talking about and leave a comment. No account, no app to install. Their comments land in a file your AI coding assistant (Claude Code, Cursor, etc.) can read and act on. When it fixes something, the person who asked sees it flip to "done" right on the page.
 
-![The welcome card, shown the first time someone comments](docs/welcome.webp)
+![Setting your name and colour, previewed as a real comment](docs/welcome.webp)
 
 ## Get feedback in 3 steps
 
@@ -21,10 +21,10 @@ npx feedback-tunnel 3000
 
 **3. Send people the link it prints out:**
 ```
-  feedback-tunnel v0.1
+  feedback-tunnel v0.2.0
 
   Prototype     http://localhost:3000
-  Your view     http://localhost:4000  (see and resolve notes here)
+  Your view     http://localhost:4000  (you can resolve notes here)
   Notes file    ./FEEDBACK.md
 
   Share this link  https://quiet-marble-otter.trycloudflare.com
@@ -37,15 +37,15 @@ Prefer not to type `npx` every time? Run `npm i -g feedback-tunnel` once, then j
 ## What the other person sees
 
 - They open your link and your site just works, like normal.
-- The first time they click **Comment**, a quick card asks for their name (or they can skip it and stay anonymous).
-- From then on, they can click anything (a button, a photo, a sentence) and type what they think.
+- The first time they click **Comment**, a quick card asks for their name and shows the colour their comments will have. They can tap their avatar to pick a different one.
+- From then on, they can click anything (a button, a photo, a sentence) and type what they think. Keyboard fans can press **C** to start commenting and **N** to open the list of comments.
 
-![The toolbar: Comment button at rest, and mid-commenting](docs/toolbar.webp)
-![Writing a note, with the notes panel open alongside it](docs/composer.webp)
+![The dock at rest, and while commenting](docs/dock.webp)
+![Writing a comment, the posted comment, and the moment it's resolved](docs/comment-and-resolve.webp)
 
 ## What you do
 
-- Watch notes arrive in your terminal, or open `http://localhost:4000` to see them on the page.
+- Watch comments arrive in your terminal, or open `http://localhost:4000` to see them on the page. In your own view, the comments panel has **Copy prompt** (the instruction for your coding agent) and **Open file** (opens `FEEDBACK.md` in one click). Reviewers never see either.
 - Ask your AI coding assistant to work through them. Paste this once into your `CLAUDE.md` or `AGENTS.md` file:
 
 ```md
@@ -56,13 +56,13 @@ Notes from reviewers on the shared prototype are in FEEDBACK.md. When I ask you 
 - After fixing a note, change its `- [ ]` to `- [x]`. Don't edit anything else in FEEDBACK.md.
 ```
 
-- Then just say **"work through FEEDBACK.md"**. Each fix your assistant makes shows up live for the person who asked for it, and their note flips to resolved automatically.
+- Then just say **"work through FEEDBACK.md"**. Each fix your assistant makes shows up live for the person who asked for it, and their comment flips to resolved automatically.
 
-![A resolved note, with a fresh one just posted alongside it](docs/resolved-note.webp)
+![The comments panel in your own view: open and resolved comments, with one click to copy the agent prompt or open FEEDBACK.md](docs/comments-panel.webp)
 
-## Where the notes go
+## Where the comments go
 
-Every note is saved into a file called `FEEDBACK.md`, right next to your code. No separate app or dashboard to check. Each one looks like this:
+Every comment is saved as a note in a file called `FEEDBACK.md`, right next to your code. No separate app or dashboard to check. Each one looks like this:
 
 ```md
 - [ ] **#1** Button "Choose Pair" on `/`
@@ -79,10 +79,10 @@ Enough detail for your AI coding assistant to find the exact spot in your code, 
 
 ## A few good-to-knows
 
-- **No accounts, ever.** People just type a name (or don't) and get a coloured avatar for the session. Nothing to sign up for.
-- **Only you can mark things resolved.** People with the link can leave notes, but only you, on your own laptop, can check them off.
+- **No accounts, ever.** People just type their name and pick a colour for their avatar. Nothing to sign up for.
+- **Only you can mark things resolved.** People with the link can leave comments, but only you, on your own laptop, can check them off.
 - **Anyone with the link can comment**, and the link stops working the moment you quit. Still, treat it like a live demo: don't share a page that has real passwords or API keys sitting in it.
-- **Works on phones.** Reviewers can leave notes from their phone just as easily as their laptop.
+- **Works on phones.** Reviewers can leave comments from their phone just as easily as their laptop.
 - **Plays nicely with Vite, Next.js and other dev servers.** No config changes needed on your end.
 - **Big, JavaScript-heavy sites may need a build first.** If a reviewer gets a blank page, build your site and point feedback-tunnel at that instead of the raw dev server. Your AI coding assistant can help with this if you're not sure how.
 

@@ -78,15 +78,15 @@ with sync_playwright() as p:
     check("...without reloading their page", r.evaluate("window.__noReload") == 1)
     check("...and the pin stays attached", any(s.startswith("1:open") and not s.endswith("hidden") for s in r.evaluate(PINS)), r.evaluate(PINS))
 
-    # -- the host resolves it on localhost; the reviewer watches it turn green
+    # -- the host resolves it on localhost; the reviewer watches it resolve
     hp = b.new_context(viewport={"width": 1100, "height": 700}).new_page()
     hp.on("pageerror", lambda e: errs.append(str(e)))
     hp.goto(LOCAL); hp.wait_for_selector("feedback-tunnel", state="attached"); hp.wait_for_selector("text=Choose Pair"); time.sleep(1)
     hp.locator("feedback-tunnel").locator(".pin", has=hp.locator(".num", has_text="1")).click(); time.sleep(0.4)
-    hp.locator("feedback-tunnel").get_by_role("button", name="Resolve note").click()
-    check("reviewer sees the pin go green over the tunnel", poll(lambda: "1:green" in r.evaluate(PINS), timeout=10), r.evaluate(PINS))
-    check("...with the host's name in the toast", poll(lambda: "Chip resolved note 1" in r.evaluate(TOASTS)), r.evaluate(TOASTS))
-    shot(r, "21_tunnel_green.png")
+    hp.locator("feedback-tunnel").get_by_role("button", name="Resolve comment").click()
+    check("reviewer sees the pin resolve over the tunnel", poll(lambda: "1:green" in r.evaluate(PINS), timeout=10), r.evaluate(PINS))
+    check("...with the host's name in the toast", poll(lambda: "Chip resolved comment 1" in r.evaluate(TOASTS)), r.evaluate(TOASTS))
+    shot(r, "21_tunnel_resolved.png")
 
     # -- reviewers cannot reopen it, because Cloudflare stamps their requests
     denied = r.evaluate("""async () => (await fetch('/__ft/api/comments/1/status', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({status:'open'})})).status""")

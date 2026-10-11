@@ -71,7 +71,7 @@ with sync_playwright() as p:
     shot(r, "19_next_after_hmr.png")
 
     edit_md("- [ ] **#1**", "- [x] **#1**")
-    check("agent's tick turns the pin green", poll(lambda: "1:green" in r.evaluate(PINS), timeout=8), r.evaluate(PINS))
+    check("agent's tick resolves the pin", poll(lambda: "1:green" in r.evaluate(PINS), timeout=8), r.evaluate(PINS))
     check("no console or page errors", errs == [], errs[:3])
     b.close()
 finish()

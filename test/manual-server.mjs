@@ -3,9 +3,10 @@
 // testing (as opposed to the Playwright suites in test/run.mjs). Started via
 // `.claude/launch.json`'s "feedback-tunnel" entry.
 //
-// Runs from a throwaway git project under test/.work/manual (gitignored) so
-// FEEDBACK.md and .feedback-tunnel/ never land in the real repo. Point the
-// Kopi Club site (the "kopi-site" launch.json entry) at :3000 first.
+// Runs from a throwaway git project under test/.manual (gitignored) so
+// FEEDBACK.md and .feedback-tunnel/ never land in the real repo. It sits outside
+// test/.work because the Playwright runner wipes that folder on every run. Start the
+// Kopi Club site (the "kopi-site" launch.json entry) first.
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BIN = path.join(HERE, '..', 'bin', 'feedback-tunnel.js');
-const dir = path.join(HERE, '.work', 'manual');
+const dir = path.join(HERE, '.manual');
 
 fs.mkdirSync(dir, { recursive: true });
 if (!fs.existsSync(path.join(dir, '.git'))) {
@@ -27,7 +28,9 @@ if (!fs.existsSync(path.join(dir, '.git'))) {
 }
 
 // --no-tunnel: this is the local-only view. Ask for the real tunnel separately.
-const args = [BIN, 'localhost:3000', '--port', '4000', '--no-tunnel'];
+// Optional args pick other ports: node test/manual-server.mjs localhost:3100 4100
+const [target = 'localhost:3000', port = '4000'] = process.argv.slice(2);
+const args = [BIN, target, '--port', port, '--no-tunnel'];
 const child = spawn(process.execPath, args, { cwd: dir, stdio: 'inherit' });
 child.on('exit', (code) => process.exit(code ?? 0));
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => child.kill(sig));

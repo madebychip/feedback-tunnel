@@ -58,10 +58,10 @@ with sync_playwright() as p:
 
     # The agent ticks the box.
     edit_md("- [ ] **#1**", "- [x] **#1**")
-    check("agent's tick turns the pin green", poll(lambda: "1:green" in r.evaluate(PINS), timeout=8), r.evaluate(PINS))
+    check("agent's tick resolves the pin", poll(lambda: "1:green" in r.evaluate(PINS), timeout=8), r.evaluate(PINS))
     shot(r, "16_vite_after_fix.png")
     toasts = r.evaluate(TOASTS)
-    check("reviewer sees the resolved toast", any(re.search(r"note 1 resolved", t, re.I) for t in toasts), toasts)
+    check("reviewer sees the resolved toast", any(re.search(r"comment 1 resolved", t, re.I) for t in toasts), toasts)
     check("no page errors", errs == [], errs)
     b.close()
 finish()

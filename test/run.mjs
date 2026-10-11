@@ -76,7 +76,8 @@ function makeProject(name) {
 async function startProxy(name, targetPort, extra = []) {
   const cwd = makeProject(name);
   const port = await freePort();
-  const proc = run(process.execPath, [BIN, String(targetPort), '--port', String(port), ...extra], { cwd });
+  // FEEDBACK_TUNNEL_NO_OPEN: "Open file" must never launch an app on the machine running the tests.
+  const proc = run(process.execPath, [BIN, String(targetPort), '--port', String(port), ...extra], { cwd, env: { ...process.env, FEEDBACK_TUNNEL_NO_OPEN: '1' } });
   await waitFor(`http://127.0.0.1:${port}/__ft/api/bootstrap`, 'the review proxy');
   return { cwd, port, url: `http://127.0.0.1:${port}/`, ...proc };
 }
@@ -131,6 +132,7 @@ const suites = {
     check('log shows a note arriving', /#1\s+Maya/.test(log));
     check('log shows a resolve from the browser', /#1 resolved by Chip/.test(log));
     check('log shows a resolve from FEEDBACK.md', /resolved ticked in FEEDBACK\.md/.test(log));
+    check('log tips the agent prompt once', (log.match(/Tip: ask your coding agent to\S* "work through FEEDBACK\.md"/g) || []).length === 1);
     check('no stack traces', !/\n\s+at .*\.js:\d+/.test(log));
     if (hostFailures) console.log(`\n--- proxy output ---\n${log}`);
     return ok;
